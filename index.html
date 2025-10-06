@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My Website</title>
+  <style>
+    body {font-family: Arial, sans-serif; background-color:#f9fafb; color:#111827; margin:0;}
+    header {background:#1f2937; color:white; text-align:center; padding:50px 0;}
+    nav a {color:#a5b4fc; margin:0 10px; text-decoration:none; font-weight:bold;}
+    main {max-width:800px; margin:40px auto; padding:0 20px;}
+    footer {text-align:center; padding:30px 0; background:#111827; color:white;}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Welcome to My Website</h1>
+    <nav>
+      <a href=\"#\">Home</a>
+      <a href=\"#\">About</a>
+      <a href=\"#\">Contact</a>
+    </nav>
+  </header>
+  <main>
+    <h2>Hello!</h2>
+    <p>This is my very first website made using GitHub Pages. I can edit this text anytime!</p>
+  </main>
+  <footer>© <span id=\"year\"></span> My Website</footer>
+  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>
