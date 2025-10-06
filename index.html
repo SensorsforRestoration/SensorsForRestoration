@@ -3,29 +3,94 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>My Website</title>
+  <title>Sensors for Restoration</title>
+
   <style>
-    body {font-family: Arial, sans-serif; background-color:#f9fafb; color:#111827; margin:0;}
-    header {background:#1f2937; color:white; text-align:center; padding:50px 0;}
-    nav a {color:#a5b4fc; margin:0 10px; text-decoration:none; font-weight:bold;}
-    main {max-width:800px; margin:40px auto; padding:0 20px;}
-    footer {text-align:center; padding:30px 0; background:#111827; color:white;}
+    /* 🌿 Main background + text */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f3e7;   /* soft beige background */
+      color: #1b2b1a;              /* dark green text */
+      margin: 0;
+    }
+
+    /* 🌾 Header bar at the top */
+    header {
+      background-color: #3d6b47;   /* deep forest green */
+      color: #f5f3e7;              /* beige text */
+      text-align: center;
+      padding: 60px 0;
+    }
+
+    /* 🍃 Navigation links */
+    nav a {
+      color: #cce3c0;              /* light sage link color */
+      margin: 0 12px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    nav a:hover {
+      color: #fffbe6;              /* light beige hover color */
+    }
+
+    /* 🌼 Main content area */
+    main {
+      max-width: 850px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
+    /* 🪴 Content boxes */
+    .card {
+      background-color: #e6ead6;   /* pale greenish beige */
+      border: 1px solid #cfd8c3;   /* light sage border */
+      border-radius: 14px;
+      padding: 24px;
+      margin: 20px 0;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    /* 🌲 Footer bar */
+    footer {
+      text-align: center;
+      background-color: #3d6b47;   /* same forest green as header */
+      color: #f5f3e7;
+      padding: 35px 0;
+      margin-top: 60px;
+    }
   </style>
 </head>
+
 <body>
   <header>
-    <h1>Welcome to My Website</h1>
+    <h1>Sensors for Restoration</h1>
     <nav>
-      <a href=\"#\">Home</a>
-      <a href=\"#\">About</a>
-      <a href=\"#\">Contact</a>
+      <a href="#">Home</a>
+      <a href="#">About</a>
+      <a href="#">Projects</a>
+      <a href="#">Contact</a>
     </nav>
   </header>
+
   <main>
-    <h2>Hello!</h2>
-    <p>This is my very first website made using GitHub Pages. I can edit this text anytime!</p>
+    <div class="card">
+      <h2>Welcome 🌿</h2>
+      <p>This website is built with GitHub Pages and features calming green and beige tones inspired by nature.</p>
+    </div>
+
+    <div class="card">
+      <h2>Our Mission</h2>
+      <p>We aim to use sensor technology to support ecosystem restoration and monitor environmental change.</p>
+    </div>
   </main>
-  <footer>© <span id=\"year\"></span> My Website</footer>
-  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+
+  <footer>
+    © <span id="year"></span> Sensors for Restoration
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
 </body>
 </html>
+
