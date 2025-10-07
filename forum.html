@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Forum · Sensors for Restoration</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Forum & Discussion</h1>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="updates.html">Updates</a>
+      <a href="forum.html">Forum</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="card">
+      <h2>Join the conversation</h2>
+      <p>Ask questions, share references, or give feedback on sensor designs and field tests. Please keep it constructive and professional.</p>
+    </div>
+
+    <div class="card">
+      <h3>Comments</h3>
+      <!-- Replace this entire <script> with the block generated at https://giscus.app -->
+      <!-- TODO: data-repo="YOUR-USER/YOUR-REPO" and data-category="…", then commit -->
+      <script src="https://giscus.app/client.js"
+        data-repo="YOUR-USER/YOUR-REPO"
+        data-repo-id=""
+        data-category="General"
+        data-category-id=""
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="light"
+        data-lang="en"
+        crossorigin="anonymous"
+        async>
+      </script>
+      <noscript>Please enable JavaScript to view the comments powered by Giscus.</noscript>
+      <p class="small">Tip: if comments don’t appear, double-check Discussions is enabled and the <code>data-repo</code>/<code>category</code> values match your repo.</p>
+    </div>
+  </main>
+
+  <footer>© <span id="y"></span> Sensors for Restoration</footer>
+  <script>document.getElementById('y').textContent=new Date().getFullYear()</script>
+</body>
+</html>
