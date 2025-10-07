@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>About · Sensors for Restoration</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>About the Project</h1>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="updates.html">Updates</a>
+      <a href="forum.html">Forum</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="card">
+      <h2>Context</h2>
+      <p>
+        Lake Bardawil is a shallow, hypersaline lagoon on the Sinai’s northern coast whose ecological health and fisheries
+        have declined due to sedimentation and limited water exchange with the Mediterranean. Restoration plans focus on
+        improving exchange and rebuilding a robust coastal water cycle. Our contribution is continuous, affordable
+        water-quality monitoring to inform decisions over time.
+      </p>
+    </div>
+
+    <div class="grid two">
+      <div class="card">
+        <h3>Technical Tracks</h3>
+        <ul>
+          <li>Electro-conductivity for salinity; optical CV for nitrate/nitrite</li>
+          <li>Power: solar sizing, battery chemistry, duty cycling</li>
+          <li>Comms: LoRa, LTE, or relay; data formats & logging</li>
+          <li>Hull design: buoyancy, waterproofing, maintainability</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Partner & Approach</h3>
+        <p class="small">
+          Work aligns with broader Sinai restoration efforts and the need to scale proven interventions via automation in
+          remote or hazardous settings. Students iterate quickly, prototype, and validate in local water bodies analogous
+          to Bardawil before deployment.
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <footer>© <span id="y"></span> Sensors for Restoration</footer>
+  <script>document.getElementById('y').textContent=new Date().getFullYear()</script>
+</body>
+</html>
