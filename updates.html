@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Updates · Sensors for Restoration</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Project Updates</h1>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="updates.html">Updates</a>
+      <a href="forum.html">Forum</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="card">
+      <h2>How to post an update</h2>
+      <ol>
+        <li>Open <strong>updates.html</strong> → click the ✏️ <em>Edit</em> button.</li>
+        <li>Copy the block below (from <code>&lt;article class="card update"&gt;</code> to <code>&lt;/article&gt;</code>).</li>
+        <li>Paste it <em>above</em> the first update and fill in date, team, and details.</li>
+        <li>Scroll down → <strong>Commit changes</strong>. The site updates automatically.</li>
+      </ol>
+      <pre class="small">&lt;article class="card update"&gt;
+  &lt;h3&gt;WEEK X – Title of your update (YYYY-MM-DD)&lt;/h3&gt;
+  &lt;p&gt;&lt;strong&gt;Team:&lt;/strong&gt; Name(s) here&lt;/p&gt;
+  &lt;ul&gt;
+    &lt;li&gt;What we tried / built / tested&lt;/li&gt;
+    &lt;li&gt;Data highlights (e.g., salinity, nitrate)&lt;/li&gt;
+    &lt;li&gt;What worked / didn’t, next steps&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;p&gt;Links: image(s), CAD, code, docs&lt;/p&gt;
+&lt;/article&gt;</pre>
+    </div>
+
+    <!-- Example updates (replace with your own) -->
+    <article class="card update">
+      <h3>WEEK 1 – Initial scoping & sensor menu (2025-10-07)</h3>
+      <p><strong>Team:</strong> Class cohort</p>
+      <ul>
+        <li>Reviewed sensor modalities (EC for salinity; colorimetric CV for nitrate/nitrite)</li>
+        <li>Sketched anchored vs roaming buoy concepts; listed data & power needs</li>
+        <li>Next: breadboard EC measurement; design first 3D-printable hull</li>
+      </ul>
+      <p>Links: <em>add photos or docs here</em></p>
+    </article>
+
+    <article class="card update">
+      <h3>WEEK 2 – EC prototype & solar budget (YYYY-MM-DD)</h3>
+      <p><strong>Team:</strong> Example names</p>
+      <ul>
+        <li>Measured conductivity across salinity standards; established calibration curve</li>
+        <li>Estimated daily Wh from 1–3 W panel; compared Li-ion pack options</li>
+        <li>Next: waterproofing tests; LoRa vs LTE module decision</li>
+      </ul>
+      <p>Links: <em>repo folder, data sheet</em></p>
+    </article>
+  </main>
+
+  <footer>© <span id="y"></span> Sensors for Restoration</footer>
+  <script>document.getElementById('y').textContent=new Date().getFullYear()</script>
+</body>
+</html>
