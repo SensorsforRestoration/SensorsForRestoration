@@ -6,6 +6,7 @@
   <title>Forum · Sensors for Restoration</title>
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
   <header>
     <h1>Forum & Discussion</h1>
@@ -21,18 +22,18 @@
   <main>
     <div class="card">
       <h2>Join the conversation</h2>
-      <p>Ask questions, share references, or give feedback on sensor designs and field tests. Please keep it constructive and professional.</p>
+      <p>Ask questions, share resources, and discuss new ideas about low-cost sensor design and environmental restoration. Please keep all comments constructive and professional.</p>
     </div>
 
     <div class="card">
       <h3>Comments</h3>
-      <!-- Replace this entire <script> with the block generated at https://giscus.app -->
-      <!-- TODO: data-repo="YOUR-USER/YOUR-REPO" and data-category="…", then commit -->
+
+      <!-- ✅ Giscus comment system -->
       <script src="https://giscus.app/client.js"
-        data-repo="YOUR-USER/YOUR-REPO"
-        data-repo-id=""
+        data-repo="SensorsforRestoration/SensorsForRestoration"
+        data-repo-id="R_kgDOP9cZnw"
         data-category="General"
-        data-category-id=""
+        data-category-id="DIC_kwDOP9cZn84CwV5m"
         data-mapping="pathname"
         data-strict="0"
         data-reactions-enabled="1"
@@ -43,12 +44,13 @@
         crossorigin="anonymous"
         async>
       </script>
+
       <noscript>Please enable JavaScript to view the comments powered by Giscus.</noscript>
-      <p class="small">Tip: if comments don’t appear, double-check Discussions is enabled and the <code>data-repo</code>/<code>category</code> values match your repo.</p>
+      <p class="small">Tip: make sure you’re logged into GitHub to post a comment.</p>
     </div>
   </main>
 
   <footer>© <span id="y"></span> Sensors for Restoration</footer>
-  <script>document.getElementById('y').textContent=new Date().getFullYear()</script>
+  <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
 </body>
 </html>
