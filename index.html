@@ -4,93 +4,61 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Sensors for Restoration</title>
-
-  <style>
-    /* 🌿 Main background + text */
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f5f3e7;   /* soft beige background */
-      color: #1b2b1a;              /* dark green text */
-      margin: 0;
-    }
-
-    /* 🌾 Header bar at the top */
-    header {
-      background-color: #3d6b47;   /* deep forest green */
-      color: #f5f3e7;              /* beige text */
-      text-align: center;
-      padding: 60px 0;
-    }
-
-    /* 🍃 Navigation links */
-    nav a {
-      color: #cce3c0;              /* light sage link color */
-      margin: 0 12px;
-      text-decoration: none;
-      font-weight: bold;
-    }
-    nav a:hover {
-      color: #fffbe6;              /* light beige hover color */
-    }
-
-    /* 🌼 Main content area */
-    main {
-      max-width: 850px;
-      margin: 40px auto;
-      padding: 0 20px;
-    }
-
-    /* 🪴 Content boxes */
-    .card {
-      background-color: #e6ead6;   /* pale greenish beige */
-      border: 1px solid #cfd8c3;   /* light sage border */
-      border-radius: 14px;
-      padding: 24px;
-      margin: 20px 0;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    }
-
-    /* 🌲 Footer bar */
-    footer {
-      text-align: center;
-      background-color: #3d6b47;   /* same forest green as header */
-      color: #f5f3e7;
-      padding: 35px 0;
-      margin-top: 60px;
-    }
-  </style>
+  <meta name="description" content="Low-cost, AI-enabled water-quality sensors for Lake Bardawil and analogous brackish environments." />
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
   <header>
     <h1>Sensors for Restoration</h1>
     <nav>
-      <a href="#">Home</a>
-      <a href="#">About</a>
-      <a href="#">Projects</a>
-      <a href="#">Contact</a>
+      <a href="index.html">Home</a>
+      <a href="updates.html">Updates</a>
+      <a href="forum.html">Forum</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
     </nav>
   </header>
 
   <main>
     <div class="card">
-      <h2>Welcome 🌿</h2>
-      <p>This website is built with GitHub Pages and features calming green and beige tones inspired by nature.</p>
-    </div>
-
-    <div class="card">
-      <h2>Our Mission</h2>
-      <p>We aim to use sensor technology to support ecosystem restoration and monitor environmental change.</p>
+      <h2>Project Overview</h2>
+      <p>
+        In collaboration with Weather Makers, this seminar explores how computer vision and AI can power
+        <strong>low-cost, long-term water-quality monitoring</strong> for Lake Bardawil in the Sinai—tracking salinity, nitrates,
+        nitrites, and other key properties. Students prototype buoyant sensors, evaluate power (solar + battery), mobility
+        (anchored vs roaming), communication, and data acquisition, then field-test in the Charles River and nearby
+        brackish sites analogous to Bardawil.
+      </p>
+      <p class="small">
+        Why Bardawil? Sedimentation has limited seawater exchange, leaving a shallow, hypersaline lagoon with
+        degraded fisheries; restoring exchange and monitoring ecology are central to regional recovery. At larger scale,
+        automating restoration tasks helps proven interventions reach impact in remote, hazardous settings.
+      </p>
+      <div class="grid two">
+        <div class="card">
+          <h3>What students do</h3>
+          <ul>
+            <li>Design & build low-cost sensing prototypes (CV/AI-assisted)</li>
+            <li>Size solar + batteries, choose radios & data formats</li>
+            <li>Test in river/brackish environments; iterate via results</li>
+            <li>Share weekly updates and data on this site</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Why this matters</h3>
+          <ul>
+            <li>Supports ecological recovery & sustainable fisheries</li>
+            <li>Generates open, long-horizon water-quality datasets</li>
+            <li>Builds student capacity across hardware, AI, and design</li>
+            <li>Demonstrates scalable, automatable restoration methods</li>
+          </ul>
+        </div>
+      </div>
+      <p><a class="btn" href="updates.html">See latest updates</a></p>
     </div>
   </main>
 
-  <footer>
-    © <span id="year"></span> Sensors for Restoration
-  </footer>
-
-  <script>
-    document.getElementById('year').textContent = new Date().getFullYear();
-  </script>
+  <footer>© <span id="y"></span> Sensors for Restoration</footer>
+  <script>document.getElementById('y').textContent=new Date().getFullYear()</script>
 </body>
 </html>
-
