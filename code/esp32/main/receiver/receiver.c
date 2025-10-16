@@ -7,24 +7,33 @@
 #include "esp_log.h"
 #include "nvs_flash.h"
 #include "esp_mac.h"
+#include "data.h"
 
 static const char *TAG = "RECEIVER";
 
 int num = 0;
 
-static void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *data, int len)
+static void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *d, int len)
 {
-    int received_value;
-    memcpy(&received_value, data, sizeof(int));
-    ESP_LOGI(TAG, "Packet num %d data len %d from " MACSTR,
-             num,
-             len,
-             MAC2STR(recv_info->src_addr));
+    if (len != sizeof(data))
+    {
+        ESP_LOGW(TAG, "Unexpected data size: %d", len);
+        return;
+    }
+
+    data received;
+    memcpy(&received, d, sizeof(data));
+    ESP_LOGI(TAG, "From " MACSTR ": depth[2]=%d, salinity=%.2f, temperature[1]=%.2f",
+             MAC2STR(recv_info->src_addr),
+             received.depth[2],
+             received.salinity[1],
+             received.temperature[1]);
     num++;
 }
 
 void receiver(void)
 {
+    ESP_ERROR_CHECK(nvs_flash_init());
 
     // Init Wi-Fi in STA mode
     ESP_ERROR_CHECK(esp_netif_init());
