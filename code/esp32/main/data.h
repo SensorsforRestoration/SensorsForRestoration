@@ -1,21 +1,21 @@
 #include <time.h>
 
-struct header
+typedef struct __attribute__((packed))
 {
     unsigned int num;
     unsigned int total;
     time_t time;
-};
+} header;
 
-struct data
+typedef struct __attribute__((packed))
 {
     unsigned int depth[360];
     float salinity[1];
     float temperature[2];
-};
+} data;
 
-struct packet
+typedef struct __attribute__((packed))
 {
-    struct header header;
-    struct data data;
-};
+    header header;
+    data data;
+} packet;
