@@ -28,6 +28,28 @@ main{max-width:960px; margin:40px auto 64px; padding:0 20px}
 }
 .grid{display:grid; gap:18px}
 .grid.two{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+/* Carousel styles for week 5 */
+.carousel{position:relative; overflow:hidden; border-radius:12px; background:var(--card);}
+.carousel__track{display:flex; transition:transform .35s ease-in-out; will-change:transform}
+.carousel__slide{flex:0 0 100%; padding:0; box-sizing:border-box; display:flex; flex-direction:column; justify-content:space-between; height:auto}
+.carousel__media{flex:0 0 auto; display:flex; align-items:center; justify-content:center; padding:8px}
+.carousel__track{gap:0}
+/* Remove default browser margins on figure to avoid slide width drift */
+.carousel__slide{margin:0}
+.carousel__slide, .carousel__slide > figcaption{box-sizing:border-box}
+.carousel__media img, .carousel__media video{max-width:100%; max-height:60vh; width:auto; height:auto; border-radius:8px; display:block; object-fit:contain}
+.carousel__slide figcaption{margin-top:8px}
+.carousel__nav{position:absolute; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.45); color:white; border:none; width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:20px; line-height:32px}
+.carousel__nav.prev{left:8px}
+.carousel__nav.next{right:8px}
+.carousel__nav:focus{outline:2px solid var(--brand-2)}
+.carousel__indicators{display:flex; gap:6px; justify-content:center; padding:8px}
+.carousel__indicators .indicator{width:9px; height:9px; background:var(--border); border-radius:50%; border:none; cursor:pointer}
+.carousel__indicators .indicator[aria-selected="true"]{background:var(--brand)}
+
+/* PDF embed responsive container */
+.pdf-embed{position:relative; padding-top:56.25%; /* 16:9 ratio */ overflow:hidden}
+.pdf-embed iframe{position:absolute; top:0; left:0; width:100%; height:100%; border:0}
 footer{
   background:var(--brand); color:var(--bg); text-align:center; padding:28px 16px; margin-top:64px;
 }

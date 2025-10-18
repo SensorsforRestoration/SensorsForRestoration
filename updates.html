@@ -26,44 +26,83 @@
       <p>This section will display weekly progress updates from each team as development advances.</p>
     </div>
 
-    <article class="card update">
-      <h3>Week 1 Team Updates</h3>
-      <p>Tentative</p>
-    </article>
 
-    <article class="card update">
-      <h3>Week 2 Team Updates</h3>
-      <p>Week 2 update. </p>
-    </article>
 
     <article class="card update">
       <h3>Week 3 Team Updates</h3>
       <p>Buoyancy test complete. Considering alternative material for perpendicular stabilizer (more environmentally
-        friendly). Drilled four stainless steel screws into bottom. Drilled JSN-SOR4T sensor hole using 7/8th spade bit
-        for tight seal. Temporarily hot glued JSN-SOR4T sensor into hole for seal. Set up sensor with arduino and tested
+        friendly). Drilled four stainless steel screws into bottom. Drilled JSN-SR04T sensor hole using 7/8th spade bit
+        for tight seal. Temporarily hot glued JSN-SR04T sensor into hole for seal. Set up sensor with arduino and tested
         in water tub. </p>
     </article>
 
     <article class="card update">
       <h3>Week 4 Team Updates</h3>
-      <p>Communications: Pushed basic code to <code>code/esp32</code> folder and established packet structure.
+      <p><b>Communications:</b> Pushed basic code to <code>code/esp32</code> folder and established packet structure.
         Researched data storage methods, current thinking SD Card -> OSS InfluxDB.</p>
     </article>
 
     <article class="card update">
       <h3>Week 5 Team Updates</h3>
-      <p>Depth Sensing: Went down to the charles. Tested the depth sensor off the bank. Had to get quite far in and went for a swim.
-        Found that neeeded to be greater than 1m in order to asccurately measure and not give minimum values of around 1m.
+      <p><b>Depth Sensing:</b> Went down to the Charles. Tested the depth sensor off the bank. Had to get quite far in and went for a swim.
+        Found that needed to be greater than 1m in order to accurately measure and not give minimum values of around 1m.
         But success overall! No problem with the measuring cone.
-  From enclosure team:
-        JSN-SOR4T depth sensor problem regarding water depth and cone span solved. 
+     </p>
+
+      <div class="carousel" id="week5-carousel" aria-roledescription="carousel">
+        <button class="carousel__nav prev" aria-label="Previous">‹</button>
+        <div class="carousel__track">
+          <figure class="carousel__slide" data-index="0">
+            <div class="carousel__media">
+              <img src="./20251410Test001.jpg" alt="Test image 1">
+            </div>
+            <figcaption class="small">Shore test photo 1</figcaption>
+          </figure>
+
+          <figure class="carousel__slide" data-index="1">
+            <div class="carousel__media">
+              <img src="./20251410Test002.jpg" alt="Test image 2">
+            </div>
+            <figcaption class="small">Shore test photo 2</figcaption>
+          </figure>
+
+          <figure class="carousel__slide" data-index="2">
+            <div class="carousel__media">
+              <img src="./20251410Test003.jpg" alt="Test image 3">
+            </div>
+            <figcaption class="small">Shore test photo 3</figcaption>
+          </figure>
+
+          <figure class="carousel__slide" data-index="3">
+            <div class="carousel__media">
+              <video controls preload="metadata" tabindex="0">
+                <source src="./20251410Test004.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+              </video>
+            </div>
+            <figcaption class="small">Test video</figcaption>
+          </figure>
+        </div>
+        <button class="carousel__nav next" aria-label="Next">›</button>
+
+        <div class="carousel__indicators" role="tablist" aria-label="Slide indicators">
+          <button class="indicator" data-slide-to="0" aria-label="Slide 1" aria-selected="true"></button>
+          <button class="indicator" data-slide-to="1" aria-label="Slide 2"></button>
+          <button class="indicator" data-slide-to="2" aria-label="Slide 3"></button>
+          <button class="indicator" data-slide-to="3" aria-label="Slide 4"></button>
+        </div>
+      </div>
+      <p> 
+        <b>Enclosure team:</b>
         Enclosure team thought about alternative material to use for stabilizing effect on PVC sensor enclosure. 
         Created sketch looking at Forces to consider. Thought about anchor attachment as well (included in diagram).
       </p>
-      <img src="./20251410Test001.jpg">
-      <img src="20251410Test002.jpg">
-      <img src="20251410Test003.jpg">
-      <img src="20251410Test004.jpg">
+
+      <!-- Embedded PDF: forces.pdf -->
+      <div class="pdf-embed">
+        <iframe src="./forces.pdf" title="Forces diagram" frameborder="0" loading="lazy"></iframe>
+      </div>
+
     </article>
     
   </main>
@@ -71,6 +110,56 @@
   <footer>© <span id="y"></span> Sensors for Restoration</footer>
   <script>
     document.getElementById('y').textContent = new Date().getFullYear();
+  </script>
+  <script>
+    // Week 5 carousel script
+    (function(){
+      const carousel = document.getElementById('week5-carousel');
+      if(!carousel) return;
+      const track = carousel.querySelector('.carousel__track');
+      const slides = Array.from(carousel.querySelectorAll('.carousel__slide'));
+      const prev = carousel.querySelector('.carousel__nav.prev');
+      const next = carousel.querySelector('.carousel__nav.next');
+      const indicators = Array.from(carousel.querySelectorAll('.indicator'));
+      let index = 0;
+
+      function update(){
+        const slideWidth = slides[0].getBoundingClientRect().width;
+        track.style.transform = `translateX(-${Math.round(index * slideWidth)}px)`;
+        indicators.forEach((btn,i)=> btn.setAttribute('aria-selected', String(i===index)));
+        // pause any videos not visible, leave controls available for current
+        slides.forEach((s,i)=>{
+          const vid = s.querySelector('video');
+          if(vid){
+            if(i===index) vid.controls = true; else { vid.pause(); vid.currentTime = 0; }
+          }
+        });
+      }
+
+      // Reposition on resize to keep slides centered
+      window.addEventListener('resize', ()=>{
+        // small debounce
+        clearTimeout(window.__carouselResize);
+        window.__carouselResize = setTimeout(()=> update(), 80);
+      });
+
+      prev.addEventListener('click', ()=>{ index = (index-1+slides.length)%slides.length; update(); });
+      next.addEventListener('click', ()=>{ index = (index+1)%slides.length; update(); });
+
+      indicators.forEach((btn,i)=> btn.addEventListener('click', ()=>{ index = i; update(); }));
+
+      // keyboard navigation
+      carousel.addEventListener('keydown', (e)=>{
+        if(e.key === 'ArrowLeft') prev.click();
+        if(e.key === 'ArrowRight') next.click();
+      });
+
+      // make carousel focusable for keyboard users
+      carousel.setAttribute('tabindex','0');
+
+      // init
+      update();
+    })();
   </script>
 </body>
 
