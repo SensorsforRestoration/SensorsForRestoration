@@ -1,21 +1,15 @@
-#include <time.h>
+#pragma once
+#include <stdint.h>
 
-struct header
-{
-    unsigned int num;
-    unsigned int total;
-    time_t time;
-};
+typedef struct {
+    float depth[360];
+    float temperature[1];
+    float salinity[2];
+} data;
 
-struct data
-{
-    unsigned int depth[360];
-    float salinity[1];
-    float temperature[2];
-};
-
-struct packet
-{
-    struct header header;
-    struct data data;
-};
+typedef struct {
+    uint32_t packet_id;    
+    uint64_t timestamp;  
+    uint8_t sensor_id[6];
+    data payload;
+} packet_t;
