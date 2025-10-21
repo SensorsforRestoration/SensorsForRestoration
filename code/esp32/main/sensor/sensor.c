@@ -4,12 +4,14 @@
 #include "esp_mac.h"
 #include "esp_now.h"
 #include "esp_wifi.h"
+#include "esp_timer.h"
 #include "data.h"
 
 static const char *TAG = "SENSOR";
 
 RTC_SLOW_ATTR data current_data;
 RTC_SLOW_ATTR int count = 0;
+RTC_SLOW_ATTR uint32_t packet_id = 0;
 
 const int wakeup_time_sec = 1;
 uint8_t receiver_mac[] = {0x3C, 0xE9, 0x0E, 0x72, 0x0A, 0xFC};
@@ -34,6 +36,32 @@ static void init_esp_now(void)
     ESP_ERROR_CHECK(esp_now_add_peer(&peer));
 }
 
+static void send_packet(void)
+{
+    packet_t packet ={0};
+
+    packet.packet_id = packet_id++;
+    packet.timestamp = esp_timer_get_time();
+    esp_read_mac(packet.sensor_id, ESP_MAC_WIFI_STA);
+
+    memcpy(&packet.payload, &current_data, sizeof(data));
+
+    ESP_LOGI(TAG, "Initialising ESP-NOW and sending full packet...");
+    init_esp_now();
+
+    esp_err_t result = esp_now_send(reciever_mac, (uint8_t *)&paclet, sizeof(packet));
+    if (result == ESP_OK)
+    {
+        ESP_LOGI(TAG, "ESP-NOW send success (packet ID %lu)", packet.packet_id);
+    }
+    else
+    {
+        ESP_LOGE(TAG, "ESP-NOW send failed: %s" esp_err_to_name(result))
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(100));
+}
+
 void sensor(void)
 {
     // Increment count in RTC memory
@@ -46,20 +74,9 @@ void sensor(void)
     if (count % 10 == 0)
     {
         current_data.salinity[0] = count;
-
-        ESP_LOGI(TAG, "Initializing ESP-NOW and sending data...");
-        init_esp_now();
-
-        esp_err_t result = esp_now_send(receiver_mac, (uint8_t *)&current_data, sizeof(current_data));
-        if (result == ESP_OK)
-            ESP_LOGI(TAG, "ESP-NOW send success");
-        else
-            ESP_LOGE(TAG, "ESP-NOW send failed: %s", esp_err_to_name(result));
-
-        // Wait a short moment to allow the send to complete
-        vTaskDelay(pdMS_TO_TICKS(100));
+        send_packet();
         count = 0;
-    }
+    } 
 
     ESP_LOGI(TAG, "Entering deep sleep for %d seconds...", wakeup_time_sec);
     esp_sleep_enable_timer_wakeup(wakeup_time_sec * 1000000ULL);

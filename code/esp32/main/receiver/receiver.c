@@ -15,19 +15,23 @@ int num = 0;
 
 static void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *d, int len)
 {
-    if (len != sizeof(data))
+    if (len != sizeof(packet_t))
     {
         ESP_LOGW(TAG, "Unexpected data size: %d", len);
         return;
     }
 
-    data received;
-    memcpy(&received, d, sizeof(data));
-    ESP_LOGI(TAG, "From " MACSTR ": depth[2]=%d, salinity=%.2f, temperature[1]=%.2f",
+    packet_t received;
+    memcpy(&received, d, sizeof(received));
+    ESP_LOGI(TAG, 
+            "From " MACSTR " | Packet ID: %lu | Time: %llu | Depth[2]=%.2f | Salinity[0]=%.2f | Temp[1]=%.2f",
              MAC2STR(recv_info->src_addr),
-             received.depth[2],
-             received.salinity[1],
-             received.temperature[1]);
+             received.packet_id,
+             recieved.timestamp,
+             recieved.payload.depth[2],
+             recieved.payload.salinity[0]
+             recieved.payload.temperature[1],
+             recieved.payload.ph[0]);
     num++;
 }
 
