@@ -38,7 +38,7 @@ static void init_esp_now(void)
 
 static void send_packet(void)
 {
-    packet_t packet ={0};
+    packet_t packet = {0};
 
     packet.packet_id = packet_id++;
     packet.timestamp = esp_timer_get_time();
@@ -49,14 +49,14 @@ static void send_packet(void)
     ESP_LOGI(TAG, "Initialising ESP-NOW and sending full packet...");
     init_esp_now();
 
-    esp_err_t result = esp_now_send(reciever_mac, (uint8_t *)&paclet, sizeof(packet));
+    esp_err_t result = esp_now_send(receiver_mac, (uint8_t *)&packet, sizeof(packet));
     if (result == ESP_OK)
     {
         ESP_LOGI(TAG, "ESP-NOW send success (packet ID %lu)", packet.packet_id);
     }
     else
     {
-        ESP_LOGE(TAG, "ESP-NOW send failed: %s" esp_err_to_name(result))
+        ESP_LOGI(TAG, "ESP-NOW send failed: %s", esp_err_to_name(result));
     }
 
     vTaskDelay(pdMS_TO_TICKS(100));
@@ -69,14 +69,16 @@ void sensor(void)
     current_data.depth[count] = count;
 
     if (count % 5 == 0)
+    {
         current_data.temperature[(count / 5) - 1] = count;
+    }
 
     if (count % 10 == 0)
     {
         current_data.salinity[0] = count;
         send_packet();
         count = 0;
-    } 
+    }
 
     ESP_LOGI(TAG, "Entering deep sleep for %d seconds...", wakeup_time_sec);
     esp_sleep_enable_timer_wakeup(wakeup_time_sec * 1000000ULL);

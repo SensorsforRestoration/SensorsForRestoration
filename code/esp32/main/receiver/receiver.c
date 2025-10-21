@@ -17,21 +17,20 @@ static void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *d, int 
 {
     if (len != sizeof(packet_t))
     {
-        ESP_LOGW(TAG, "Unexpected data size: %d", len);
+        ESP_LOGI(TAG, "Unexpected data size: %d", len);
         return;
     }
 
     packet_t received;
     memcpy(&received, d, sizeof(received));
-    ESP_LOGI(TAG, 
-            "From " MACSTR " | Packet ID: %lu | Time: %llu | Depth[2]=%.2f | Salinity[0]=%.2f | Temp[1]=%.2f",
+    ESP_LOGI(TAG,
+             "From " MACSTR " | Packet ID: %lu | Time: %llu | Depth[2]=%.2f | Salinity[0]=%.2f | Temp[1]=%.2f",
              MAC2STR(recv_info->src_addr),
              received.packet_id,
-             recieved.timestamp,
-             recieved.payload.depth[2],
-             recieved.payload.salinity[0]
-             recieved.payload.temperature[1],
-             recieved.payload.ph[0]);
+             received.timestamp,
+             received.payload.depth[2],
+             received.payload.salinity[0],
+             received.payload.temperature[1]);
     num++;
 }
 
