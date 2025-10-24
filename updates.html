@@ -21,14 +21,21 @@
   </header>
 
   <main>
-    <div class="card">
+    <div>
       <h2>Project Updates</h2>
-      <p>Select a week to view details and assets.</p>
-      <ul class="grid two">
-        <li class="card"><a href="updates/week3/">Week 3 Team Updates</a></li>
-        <li class="card"><a href="updates/week4/">Week 4 Team Updates</a></li>
-        <li class="card"><a href="updates/week5/">Week 5 Team Updates</a></li>
-        <li class="card"><a href="updates/week6/">Week 6 Team Updates</a></li>
+      <ul>
+        <li><a href="updates/week3/">Week 3</a></li>
+        <li><a href="updates/week4/">Week 4</a></li>
+        <li><a href="updates/week5/">Week 5</a></li>
+        <li><a href="updates/week6/">Week 6</a></li>
+        <li><a href="updates/week7/">Week 7</a></li>
+        <li><a href="updates/week8/">Week 8</a></li>
+        <li><a href="updates/week9/">Week 9</a></li>
+        <li><a href="updates/week10/">Week 10</a></li>
+        <li><a href="updates/week11/">Week 11</a></li>
+        <li><a href="updates/week12/">Week 12</a></li>
+        <li><a href="updates/week13/">Week 13</a></li>
+        <li><a href="updates/week14/">Week 14</a></li>
       </ul>
     </div>
 
@@ -41,56 +48,7 @@
   <script>
     document.getElementById('y').textContent = new Date().getFullYear();
   </script>
-  <script>
-    // Week 5 carousel script
-    (function(){
-      const carousel = document.getElementById('week5-carousel');
-      if(!carousel) return;
-      const track = carousel.querySelector('.carousel__track');
-      const slides = Array.from(carousel.querySelectorAll('.carousel__slide'));
-      const prev = carousel.querySelector('.carousel__nav.prev');
-      const next = carousel.querySelector('.carousel__nav.next');
-      const indicators = Array.from(carousel.querySelectorAll('.indicator'));
-      let index = 0;
-
-      function update(){
-        const slideWidth = slides[0].getBoundingClientRect().width;
-        track.style.transform = `translateX(-${Math.round(index * slideWidth)}px)`;
-        indicators.forEach((btn,i)=> btn.setAttribute('aria-selected', String(i===index)));
-        // pause any videos not visible, leave controls available for current
-        slides.forEach((s,i)=>{
-          const vid = s.querySelector('video');
-          if(vid){
-            if(i===index) vid.controls = true; else { vid.pause(); vid.currentTime = 0; }
-          }
-        });
-      }
-
-      // Reposition on resize to keep slides centered
-      window.addEventListener('resize', ()=>{
-        // small debounce
-        clearTimeout(window.__carouselResize);
-        window.__carouselResize = setTimeout(()=> update(), 80);
-      });
-
-      prev.addEventListener('click', ()=>{ index = (index-1+slides.length)%slides.length; update(); });
-      next.addEventListener('click', ()=>{ index = (index+1)%slides.length; update(); });
-
-      indicators.forEach((btn,i)=> btn.addEventListener('click', ()=>{ index = i; update(); }));
-
-      // keyboard navigation
-      carousel.addEventListener('keydown', (e)=>{
-        if(e.key === 'ArrowLeft') prev.click();
-        if(e.key === 'ArrowRight') next.click();
-      });
-
-      // make carousel focusable for keyboard users
-      carousel.setAttribute('tabindex','0');
-
-      // init
-      update();
-    })();
-  </script>
+  
 
 </body>
 
