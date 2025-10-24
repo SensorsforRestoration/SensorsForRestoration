@@ -23,111 +23,18 @@
   <main>
     <div class="card">
       <h2>Project Updates</h2>
-      <p>This section will display weekly progress updates from each team as development advances.</p>
+      <p>Select a week to view details and assets.</p>
+      <ul class="grid two">
+        <li class="card"><a href="updates/week3/">Week 3 Team Updates</a></li>
+        <li class="card"><a href="updates/week4/">Week 4 Team Updates</a></li>
+        <li class="card"><a href="updates/week5/">Week 5 Team Updates</a></li>
+        <li class="card"><a href="updates/week6/">Week 6 Team Updates</a></li>
+      </ul>
     </div>
 
 
 
-    <article class="card update">
-      <h3>Week 3 Team Updates</h3>
-      <p>Buoyancy test complete. Considering alternative material for perpendicular stabilizer (more environmentally
-        friendly). Drilled four stainless steel screws into bottom. Drilled JSN-SR04T sensor hole using 7/8th spade bit
-        for tight seal. Temporarily hot glued JSN-SR04T sensor into hole for seal. Set up sensor with arduino and tested
-        in water tub. </p>
-    </article>
-
-    <article class="card update">
-      <h3>Week 4 Team Updates</h3>
-      <p><b>Communications:</b> Pushed basic code to <code>code/esp32</code> folder and established packet structure.
-        Researched data storage methods, current thinking SD Card -> OSS InfluxDB.</p>
-    </article>
-
-    <article class="card update">
-      <h3>Week 5 Team Updates</h3>
-      <p><b>Depth Sensing:</b> Went down to the Charles. Tested the depth sensor off the bank. Had to get quite far in and went for a swim.
-        Found that needed to be greater than 1m in order to accurately measure and not give minimum values of around 1m.
-        But success overall! No problem with the measuring cone. Additionally, the code we used is uploaded in the code>esp32 pathway of the github.
-    <article class="card update">
-      <h3>Week 6 Team Updates</h3>
-      <p><b>Enclosure:</b> Cut PVC pipes with different lengths to accurate flatness to prevent any water inflow in the future; 
-        brainstormed on anchoring and additional buoyancy constraints. Cork material didn't work; will test out various lengths
-        with styrofoam and with our inflatable buoy in the coming week.
-        
-    </article>
-     </p>
-
-      <div class="carousel" id="week5-carousel" aria-roledescription="carousel">
-        <button class="carousel__nav prev" aria-label="Previous">‹</button>
-        <div class="carousel__track">
-          <figure class="carousel__slide" data-index="0">
-            <div class="carousel__media">
-              <img src="./20251410Test001.jpg" alt="Test image 1">
-            </div>
-            <figcaption class="small">Shore test photo 1</figcaption>
-          </figure>
-
-          <figure class="carousel__slide" data-index="1">
-            <div class="carousel__media">
-              <img src="./20251410Test002.jpg" alt="Test image 2">
-            </div>
-            <figcaption class="small">Shore test photo 2</figcaption>
-          </figure>
-
-          <figure class="carousel__slide" data-index="2">
-            <div class="carousel__media">
-              <img src="./20251410Test003.jpg" alt="Test image 3">
-            </div>
-            <figcaption class="small">Shore test photo 3</figcaption>
-          </figure>
-
-          <figure class="carousel__slide" data-index="3">
-            <div class="carousel__media">
-              <video controls preload="metadata" tabindex="0">
-                <source src="./20251410Test004.mp4" type="video/mp4">
-                Your browser does not support the video tag.
-              </video>
-            </div>
-            <figcaption class="small">Test video</figcaption>
-          </figure>
-        </div>
-        <button class="carousel__nav next" aria-label="Next">›</button>
-
-        <div class="carousel__indicators" role="tablist" aria-label="Slide indicators">
-          <button class="indicator" data-slide-to="0" aria-label="Slide 1" aria-selected="true"></button>
-          <button class="indicator" data-slide-to="1" aria-label="Slide 2"></button>
-          <button class="indicator" data-slide-to="2" aria-label="Slide 3"></button>
-          <button class="indicator" data-slide-to="3" aria-label="Slide 4"></button>
-        </div>
-      </div>
-      <p> 
-        <b>Enclosure team:</b>
-        Enclosure team thought about alternative material to use for stabilizing effect on PVC sensor enclosure. 
-        Created sketch looking at Forces to consider. Thought about anchor attachment as well (included in diagram).
-      </p>
-
-      <!-- Embedded PDF: forces.pdf -->
-      <div class="pdf-embed">
-        <iframe src="./forces.pdf" title="Forces diagram" frameborder="0" loading="lazy"></iframe>
-      </div>
-
-      <p> 
-        <br>
-        <b>Sensing team:</b>
-        We obtained potassium nitrate from Duda Energy in order to create nitrate solutions for testing. We created a 100 pm nitrate solution and then diluted it to also make a 50 ppm solution. The test strips instructions were to submerge the test strip in the solution for two seconds, take it out of the water, and let the color develop while leaving the strip level. However, in a sensor, it will be difficult to take a test strip out of the water so we want to develop a methodology that will allow us to get measurements from the strip while it is still submerged. By leaving a test strip submerged for 30 seconds, we got a reading between 25-50 ppm in comparison to the control for which we took the test strip out of the water was 50-100ppm. Further research is needed as to whether letting the test strip remain submerged for longer will give us readings closer to the real concentration and if the test strip gives a lower reading at a consistent difference or ratio.
-        <br>
-        <br>
-        Additionally, we created four groups to test the API Nitrate Test Kit. (1) No shaking for both the test solution and sample (2) No shaking the test solution but shaking the sample (3) Shaking the test solution and not shaking the sample (4) Shaking both the test solution and sample according to the test kit instructions.
-        <br>
-        <br>
-        After letting the test solution settle for 1 week, we performed the test for groups (1) and (2) which resulted in similar results despite the addition of shaking the sample for (2). Then, we shook the test solution and performed the tests for (3) and (4). (1) and (2) both had a yellow color that reflected a 0-5.0 ppm concentration of nitrates which we hypothesized may be due to the lack of shaking. (3) showed a red-orange color with darker colors concentrated in the middle of the test tube. (4) was uniformly red and had an accurate reading. Taking these tests together, we concluded that shaking the test solution is important to the test and we may be able to introduce vibrating components to the sensor which allow us to shake the test solution.
-        <br>
-        <br>
-      </p>
-      <img src="Nitrate_Test.jpg" alt="API Nitrate Test Experiment" width="500" height="500">
-    
-
-    </article>
-
+    <!-- Weekly updates moved into the updates/ folder. Use the links above to open each week. -->
   </main>
 
   <footer>© <span id="y"></span> Sensors for Restoration</footer>

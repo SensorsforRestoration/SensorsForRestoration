@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Week 5 · Sensors for Restoration</title>
+  <link rel="stylesheet" href="../../style.css" />
+</head>
+
+<body>
+  <header>
+    <h1>Project Updates — Week 5</h1>
+    <nav>
+      <a href="../../index.html">Home</a>
+      <a href="../../updates.html">Updates</a>
+      <a href="../../forum.html">Forum</a>
+      <a href="../../about.html">About</a>
+      <a href="../../contact.html">Contact</a>
+    </nav>
+  </header>
+
+  <main>
+    <article class="card update">
+      <h3>Week 5 Team Updates</h3>
+      <p><b>Depth Sensing:</b> Went down to the Charles. Tested the depth sensor off the bank. Had to get quite far in and went for a swim.
+        Found that needed to be greater than 1m in order to accurately measure and not give minimum values of around 1m.
+        But success overall! No problem with the measuring cone. Additionally, the code we used is uploaded in the code>esp32 pathway of the github.
+      </p>
+
+      <div class="carousel" id="week5-carousel" aria-roledescription="carousel">
+        <button class="carousel__nav prev" aria-label="Previous">‹</button>
+        <div class="carousel__track">
+          <figure class="carousel__slide" data-index="0">
+            <div class="carousel__media">
+              <img src="./assets/20251410Test001.jpg" alt="Test image 1">
+            </div>
+            <figcaption class="small">Shore test photo 1</figcaption>
+          </figure>
+
+          <figure class="carousel__slide" data-index="1">
+            <div class="carousel__media">
+              <img src="./assets/20251410Test002.jpg" alt="Test image 2">
+            </div>
+            <figcaption class="small">Shore test photo 2</figcaption>
+          </figure>
+
+          <figure class="carousel__slide" data-index="2">
+            <div class="carousel__media">
+              <img src="./assets/20251410Test003.jpg" alt="Test image 3">
+            </div>
+            <figcaption class="small">Shore test photo 3</figcaption>
+          </figure>
+
+          <figure class="carousel__slide" data-index="3">
+            <div class="carousel__media">
+              <video controls preload="metadata" tabindex="0">
+                <source src="./assets/20251410Test004.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+              </video>
+            </div>
+            <figcaption class="small">Test video</figcaption>
+          </figure>
+        </div>
+        <button class="carousel__nav next" aria-label="Next">›</button>
+
+        <div class="carousel__indicators" role="tablist" aria-label="Slide indicators">
+          <button class="indicator" data-slide-to="0" aria-label="Slide 1" aria-selected="true"></button>
+          <button class="indicator" data-slide-to="1" aria-label="Slide 2"></button>
+          <button class="indicator" data-slide-to="2" aria-label="Slide 3"></button>
+          <button class="indicator" data-slide-to="3" aria-label="Slide 4"></button>
+        </div>
+      </div>
+
+      <p>
+        <b>Enclosure team:</b>
+        Enclosure team thought about alternative material to use for stabilizing effect on PVC sensor enclosure.
+        Created sketch looking at Forces to consider. Thought about anchor attachment as well (included in diagram).
+      </p>
+
+      <!-- Embedded PDF: forces.pdf -->
+      <div class="pdf-embed">
+        <iframe src="./assets/forces.pdf" title="Forces diagram" frameborder="0" loading="lazy"></iframe>
+      </div>
+
+    </article>
+  </main>
+
+  <footer>© <span id="y"></span> Sensors for Restoration</footer>
+  <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
+
+  <script>
+    (function(){
+      const carousel = document.getElementById('week5-carousel');
+      if(!carousel) return;
+      const track = carousel.querySelector('.carousel__track');
+      const slides = Array.from(carousel.querySelectorAll('.carousel__slide'));
+      const prev = carousel.querySelector('.carousel__nav.prev');
+      const next = carousel.querySelector('.carousel__nav.next');
+      const indicators = Array.from(carousel.querySelectorAll('.indicator'));
+      let index = 0;
+
+      function update(){
+        const slideWidth = slides[0].getBoundingClientRect().width;
+        track.style.transform = `translateX(-${Math.round(index * slideWidth)}px)`;
+        indicators.forEach((btn,i)=> btn.setAttribute('aria-selected', String(i===index)));
+        slides.forEach((s,i)=>{
+          const vid = s.querySelector('video');
+          if(vid){
+            if(i===index) vid.controls = true; else { vid.pause(); vid.currentTime = 0; }
+          }
+        });
+      }
+
+      window.addEventListener('resize', ()=>{
+        clearTimeout(window.__carouselResize);
+        window.__carouselResize = setTimeout(()=> update(), 80);
+      });
+
+      prev.addEventListener('click', ()=>{ index = (index-1+slides.length)%slides.length; update(); });
+      next.addEventListener('click', ()=>{ index = (index+1)%slides.length; update(); });
+
+      indicators.forEach((btn,i)=> btn.addEventListener('click', ()=>{ index = i; update(); }));
+
+      carousel.addEventListener('keydown', (e)=>{
+        if(e.key === 'ArrowLeft') prev.click();
+        if(e.key === 'ArrowRight') next.click();
+      });
+
+      carousel.setAttribute('tabindex','0');
+
+      update();
+    })();
+  </script>
+</body>
+
+</html>
