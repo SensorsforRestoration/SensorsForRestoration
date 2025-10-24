@@ -59,3 +59,9 @@ footer{
 }
 .btn:hover{filter:brightness(1.05)}
 .small{color:var(--muted); font-size:.95rem}
+
+/* Updates listing link color — make week links dark green to match header */
+.updates-list{padding-left:1.1rem}
+.updates-list li{margin:6px 0}
+.updates-list a{color:var(--brand); font-weight:600}
+.updates-list a:hover{text-decoration:underline}
