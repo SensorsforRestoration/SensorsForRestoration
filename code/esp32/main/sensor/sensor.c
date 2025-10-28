@@ -6,7 +6,12 @@
 #include "esp_wifi.h"
 #include "esp_timer.h"
 #include "data.h"
+<<<<<<< Updated upstream
 #include "sys/time.h"
+=======
+#include <sys/time.h>
+#include <string.h>
+>>>>>>> Stashed changes
 
 static const char *TAG = "SENSOR";
 
@@ -16,6 +21,19 @@ RTC_SLOW_ATTR uint32_t packet_id = 0;
 
 const int wakeup_time_sec = 1;
 uint8_t receiver_mac[] = {0x3C, 0xE9, 0x0E, 0x72, 0x0A, 0xFC};
+
+static void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *d, int len)
+{
+    if (len == sizeof(time_sync_packet_t))
+    {
+        time_sync_packet_t pkt;
+        memcpy(&pkt, d, sizeof(pkt));
+        struct timeval tv = { .tv_sec = pkt.timestamp, .tv_usec = 0};
+        settimeofday(&tv, NULL);
+        ESP_LOGI("SENSOR", "Clock synchronised to %llu", pkt.timestamp);
+        return;
+    }
+}
 
 static void init_esp_now(void)
 {
@@ -29,6 +47,8 @@ static void init_esp_now(void)
     ESP_ERROR_CHECK(esp_wifi_start());
 
     ESP_ERROR_CHECK(esp_now_init());
+    ESP_ERROR_CHECK(esp_now_register_recv_cb(recv_cb));
+
 
     esp_now_peer_info_t peer = {0};
     memcpy(peer.peer_addr, receiver_mac, 6);
@@ -41,12 +61,17 @@ static void send_packet(void)
 {
     packet_t packet = {0};
 
+<<<<<<< Updated upstream
     packet.timestamp = esp_timer_get_time();
+=======
+    packet.packet_id = packet_id++;
+    packet.timestamp = time(NULL);
+    esp_read_mac(packet.sensor_id, ESP_MAC_WIFI_STA);
+>>>>>>> Stashed changes
 
     memcpy(&packet.payload, &current_data, sizeof(data));
 
     ESP_LOGI(TAG, "Initialising ESP-NOW and sending full packet...");
-    init_esp_now();
 
     esp_err_t result = esp_now_send(receiver_mac, (uint8_t *)&packet, sizeof(packet));
     if (result == ESP_OK)
@@ -79,15 +104,6 @@ void sensor(void)
         count = 0;
     }
 
-    ESP_LOGI(TAG, "Entering deep sleep for %d seconds...", wakeup_time_sec);
-    esp_sleep_enable_timer_wakeup(wakeup_time_sec * 1000000ULL);
-
-    // Deep sleep — CPU powers off, app_main() will run on wake
-    esp_deep_sleep_start();
-}
-
-static void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *d, int len)
-{
     if (len == sizeof(time_sync_packet_t))
     {
         time_sync_packet_t pkt;
@@ -97,4 +113,16 @@ static void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *d, int 
         ESP_LOGI("SENSOR", "Clock synchronised to %llu", pkt.timestamp);
         return;
     }
+
+    time_t now;
+    time(&now);
+    ESP_LOGI(TAG, "Current time: %s", ctime(&now));
+
+    ESP_LOGI(TAG, "Entering deep sleep for %d seconds...", wakeup_time_sec);
+    esp_sleep_enable_timer_wakeup(wakeup_time_sec * 1000000ULL);
+
+    // Deep sleep — CPU powers off, app_main() will run on wake
+    esp_deep_sleep_start();
+
+    
 }
