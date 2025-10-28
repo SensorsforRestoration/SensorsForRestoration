@@ -14,11 +14,11 @@
 
 static const char *TAG = "RECEIVER";
 
-static esp_now_peer_info_t broadcastPeer = 
-{
-    .channel = 0,
-    .encrypt = false,
-    .peer_addr = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF} //need to find the mac address of the other arduino
+static esp_now_peer_info_t broadcastPeer =
+    {
+        .channel = 0,
+        .encrypt = false,
+        .peer_addr = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF} // need to find the mac address of the other arduino
 };
 
 int num = 0;
@@ -34,14 +34,16 @@ static void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *d, int 
     packet_t received;
     memcpy(&received, d, sizeof(received));
     ESP_LOGI(TAG,
-             "From " MACSTR " | Packet ID: %lu | Time: %llu | Depth[2]=%.2f | Salinity[0]=%.2f | Temp[1]=%.2f",
+             "From " MACSTR " | Packet Num: %lu | Time: %llu | Depth[2]=%.2f | Salinity[0]=%.2f | Temp[1]=%.2f",
              MAC2STR(recv_info->src_addr),
-             received.packet_id,
+             received.packet_num,
              received.timestamp,
              received.payload.depth[2],
              received.payload.salinity[0],
              received.payload.temperature[1]);
-    num++;
+
+    bool received_all = false;
+    ESP_ERROR_CHECK(store_packet(&received, &received_all));
 }
 
 static void init_sntp(void)
@@ -84,7 +86,7 @@ void time_sync_task(void *pvParam)
         time_t now;
         time(&now);
 
-        time_sync_packet_t pkt = { .timestamp = (uint64_t)now };
+        time_sync_packet_t pkt = {.timestamp = (uint64_t)now};
         esp_err_t result = esp_now_send(broadcastPeer.peer_addr, (uint8_t *)&pkt, sizeof(pkt));
 
         if (result == ESP_OK)
@@ -120,7 +122,28 @@ void app_main(void)
 
     init_sntp();
 
+    ESP_ERROR_CHECK(storage_init());
+
     ESP_LOGI(TAG, "ESP-NOW receiver ready");
 
     xTaskCreate(time_sync_task, "time_sync_task", 4096, NULL, 5, NULL);
+
+    static packet_t packet_1 = {
+        .sequence_id = 12,
+        .packet_num = 1,
+        .total = 2,
+    };
+
+    static packet_t packet_2 = {
+        .sequence_id = 12,
+        .packet_num = 2,
+        .total = 2,
+    };
+
+    bool received_all = false;
+
+    ESP_ERROR_CHECK(store_packet(&packet_1, &received_all));
+    ESP_LOGI(TAG, "received all: %s", received_all ? "true" : "false");
+    ESP_ERROR_CHECK(store_packet(&packet_2, &received_all));
+    ESP_LOGI(TAG, "received all: %s", received_all ? "true" : "false");
 }

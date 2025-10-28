@@ -40,9 +40,7 @@ static void send_packet(void)
 {
     packet_t packet = {0};
 
-    packet.packet_id = packet_id++;
     packet.timestamp = esp_timer_get_time();
-    esp_read_mac(packet.sensor_id, ESP_MAC_WIFI_STA);
 
     memcpy(&packet.payload, &current_data, sizeof(data));
 
@@ -52,7 +50,7 @@ static void send_packet(void)
     esp_err_t result = esp_now_send(receiver_mac, (uint8_t *)&packet, sizeof(packet));
     if (result == ESP_OK)
     {
-        ESP_LOGI(TAG, "ESP-NOW send success (packet ID %lu)", packet.packet_id);
+        ESP_LOGI(TAG, "ESP-NOW send success (packet ID %lu)", packet.packet_num);
     }
     else
     {

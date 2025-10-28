@@ -1,16 +1,20 @@
 #pragma once
 #include <stdint.h>
 
-typedef struct {
+typedef struct
+{
     float depth[360];
     float temperature[1];
     float salinity[2];
 } data;
 
-typedef struct {
-    uint32_t packet_id;    
-    uint64_t timestamp;  
-    uint8_t sensor_id[6];
+typedef struct
+{
+    uint16_t sequence_id;
+    uint8_t packet_num;
+    uint16_t total;
+    uint64_t timestamp;
+    uint16_t sensor_id;
     data payload;
 } packet_t;
 
