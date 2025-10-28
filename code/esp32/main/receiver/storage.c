@@ -34,7 +34,10 @@ esp_err_t store_packet(packet_t *packet, bool *received_all)
             }
             new_packet = true;
         }
-        return err;
+        else
+        {
+            return err;
+        }
     }
 
     char sequence_key[16];
@@ -58,7 +61,7 @@ esp_err_t store_packet(packet_t *packet, bool *received_all)
         *received_all = true;
     }
 
-    err = nvs_set_i8(namespace, sequence_key, packets_received);
+    err = nvs_set_u8(namespace, sequence_key, packets_received);
     if (err != ESP_OK)
     {
         return err;

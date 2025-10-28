@@ -105,6 +105,7 @@ void time_sync_task(void *pvParam)
 
 void receiver(void)
 {
+    // When testing: ESP_ERROR_CHECK(nvs_flash_erase());
     ESP_ERROR_CHECK(nvs_flash_init());
 
     // Init Wi-Fi in STA mode
@@ -129,7 +130,7 @@ void receiver(void)
 
     xTaskCreate(time_sync_task, "time_sync_task", 4096, NULL, 5, NULL);
 
-    static packet_t packet_1 = {
+    /* static packet_t packet_1 = {
         .sequence_id = 12,
         .packet_num = 1,
         .total = 2,
@@ -147,4 +148,5 @@ void receiver(void)
     ESP_LOGI(TAG, "received all: %s", received_all ? "true" : "false");
     ESP_ERROR_CHECK(store_packet(&packet_2, &received_all));
     ESP_LOGI(TAG, "received all: %s", received_all ? "true" : "false");
+    */
 }
