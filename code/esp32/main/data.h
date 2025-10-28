@@ -13,3 +13,7 @@ typedef struct {
     uint8_t sensor_id[6];
     data payload;
 } packet_t;
+
+typedef struct {
+    uint64_t timestamp;
+} time_sync_packet_t;
