@@ -6,6 +6,7 @@
 #include "esp_wifi.h"
 #include "esp_timer.h"
 #include "data.h"
+#include "sys/time.h"
 
 static const char *TAG = "SENSOR";
 
@@ -91,7 +92,7 @@ static void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *d, int 
     {
         time_sync_packet_t pkt;
         memcpy(&pkt, d, sizeof(pkt));
-        struct timeval tv = { .tv_sec = pkt.timestamp, .tv_usec = 0};
+        struct timeval tv = {.tv_sec = pkt.timestamp, .tv_usec = 0};
         settimeofday(&tv, NULL);
         ESP_LOGI("SENSOR", "Clock synchronised to %llu", pkt.timestamp);
         return;

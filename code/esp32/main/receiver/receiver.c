@@ -11,6 +11,7 @@
 #include "data.h"
 #include "esp_sntp.h"
 #include "sys/time.h"
+#include "receiver/storage.h"
 
 static const char *TAG = "RECEIVER";
 
@@ -74,7 +75,7 @@ static void init_sntp(void)
     }
 }
 
-static void send_cb(const uint8_t *mac_addr, esp_now_send_status_t status)
+static void send_cb(const esp_now_send_info_t *tx_info, esp_now_send_status_t status)
 {
     ESP_LOGI(TAG, "Time sync send status: %s", status == ESP_NOW_SEND_SUCCESS ? "OK" : "FAIL");
 }
@@ -102,7 +103,7 @@ void time_sync_task(void *pvParam)
     }
 }
 
-void app_main(void)
+void receiver(void)
 {
     ESP_ERROR_CHECK(nvs_flash_init());
 
