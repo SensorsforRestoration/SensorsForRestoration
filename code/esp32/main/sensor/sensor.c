@@ -92,9 +92,9 @@ static void send_packet(void)
 //check and change this code
 float readDistance() {
     gpio_set_level(TRIG_PIN, 0);
-    esp_timer_delete(int);
+    //esp_timer_delete(2); //debug this part
     gpio_set_level(TRIG_PIN, 1);
-    esp_timer_delete(int);
+    //esp_timer_delete(10); //debug this part
     gpio_set_level(TRIG_PIN, 0);
   
     uint64_t pulse_start = 0;
