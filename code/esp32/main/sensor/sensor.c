@@ -8,6 +8,10 @@
 #include "data.h"
 #include <sys/time.h>
 #include <string.h>
+#include "driver/gpio.h"
+
+#define TRIG_PIN 5
+#define ECHO_PIN 18
 
 static const char *TAG = "SENSOR";
 
@@ -17,6 +21,13 @@ RTC_SLOW_ATTR uint32_t packet_num = 0;
 
 const int wakeup_time_sec = 1;
 uint8_t receiver_mac[] = {0x3C, 0xE9, 0x0E, 0x72, 0x0A, 0xFC};
+
+void setup_gpio() {
+    esp_rom_gpio_pad_select_gpio(TRIG_PIN);
+    gpio_set_direction(TRIG_PIN, GPIO_MODE_OUTPUT);
+    esp_rom_gpio_pad_select_gpio(ECHO_PIN);
+    gpio_set_direction(ECHO_PIN, GPIO_MODE_INPUT);
+}
 
 static void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *d, int len)
 {
@@ -77,11 +88,51 @@ static void send_packet(void)
     vTaskDelay(pdMS_TO_TICKS(100));
 }
 
+
+//check and change this code
+float readDistance() {
+    gpio_set_level(TRIG_PIN, 0);
+    //esp_timer_delete(2); //debug this part
+    gpio_set_level(TRIG_PIN, 1);
+    //esp_timer_delete(10); //debug this part
+    gpio_set_level(TRIG_PIN, 0);
+  
+    uint64_t pulse_start = 0;
+    uint64_t pulse_end = 0;
+  
+    while(gpio_get_level(ECHO_PIN) == 0) 
+    {
+        // Do nothing or handle timeout
+    }
+  
+    pulse_start = esp_timer_get_time();
+  
+    while(gpio_get_level(ECHO_PIN) == 1) 
+    {
+        // Do nothing or handle timeout
+    }
+
+    pulse_end = esp_timer_get_time();
+  
+    uint64_t duration = pulse_end - pulse_start;
+
+    float distance = duration * 0.0344 / 2; // 0.0344 cm/µs for speed of sound in air
+    return distance;
+
+}
+
 void sensor(void)
 {
-    // Increment count in RTC memory
+    setup_gpio();
+    
+    gpio_reset_pin(TRIG_PIN);
+    gpio_set_direction(TRIG_PIN, GPIO_MODE_OUTPUT);
+
+    gpio_reset_pin(ECHO_PIN);
+    gpio_set_direction(ECHO_PIN, GPIO_MODE_INPUT);
+
     count++;
-    current_data.depth[count] = count;
+    current_data.depth[count] = readDistance();
 
     if (count % 5 == 0)
     {
@@ -90,7 +141,7 @@ void sensor(void)
 
     if (count % 10 == 0)
     {
-        current_data.salinity[0] = count;
+        current_data.salinity[count] = count;
         send_packet();
         count = 0;
     }
