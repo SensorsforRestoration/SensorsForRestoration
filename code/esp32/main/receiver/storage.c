@@ -2,6 +2,7 @@
 #include "nvs_flash.h"
 #include "data.h"
 #include <stdio.h>
+#include "display.h"
 
 nvs_handle_t namespace;
 
@@ -66,6 +67,13 @@ esp_err_t store_packet(packet_t *packet, bool *received_all)
     {
         return err;
     }
+
+    receive_message(
+        packet->sequence_id,
+        packet->sensor_id,
+        packet->packet_num,
+        packet->total,
+        packets_received);
 
     return nvs_commit(namespace);
 }

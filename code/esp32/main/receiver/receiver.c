@@ -12,8 +12,13 @@
 #include "esp_sntp.h"
 #include "sys/time.h"
 #include "receiver/storage.h"
+#include "receiver/display.h"
 
 static const char *TAG = "RECEIVER";
+
+#define I2C_PORT I2C_NUM_0
+#define SDA_PIN 21
+#define SCL_PIN 22
 
 static esp_now_peer_info_t broadcastPeer =
     {
@@ -105,7 +110,9 @@ void time_sync_task(void *pvParam)
 
 void receiver(void)
 {
-    // When testing: ESP_ERROR_CHECK(nvs_flash_erase());
+    // Uncomment for testing:
+    // ESP_ERROR_CHECK(nvs_flash_erase());
+
     ESP_ERROR_CHECK(nvs_flash_init());
 
     // Init Wi-Fi in STA mode
@@ -122,15 +129,17 @@ void receiver(void)
     ESP_ERROR_CHECK(esp_now_register_send_cb(send_cb));
     ESP_ERROR_CHECK(esp_now_add_peer(&broadcastPeer));
 
-    init_sntp();
-
     ESP_ERROR_CHECK(storage_init());
+
+    display_init();
+
+    init_sntp();
 
     ESP_LOGI(TAG, "ESP-NOW receiver ready");
 
     xTaskCreate(time_sync_task, "time_sync_task", 4096, NULL, 5, NULL);
 
-    /* static packet_t packet_1 = {
+    static packet_t packet_1 = {
         .sequence_id = 12,
         .packet_num = 1,
         .total = 2,
@@ -142,6 +151,7 @@ void receiver(void)
         .total = 2,
     };
 
+    /*
     bool received_all = false;
 
     ESP_ERROR_CHECK(store_packet(&packet_1, &received_all));
