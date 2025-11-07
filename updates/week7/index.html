@@ -20,6 +20,13 @@
   <main>
     <article class="card update">
       <h3>Week 7 Team Updates</h3>
+      <p><b>Housing:</b></p>
+      <p>tested various lengths at the Charles, ranging from 25cm to 45cm, added 1~2kg weights to the bottom, but the only functional length was 25cm. Will proceed to CADing and changing lengths.</p>
+      <img src="IMG_4251.jpg" alt="testing photo" width="400">
+      <video width="320" height="240" controls>
+      <source src="IMG_6418.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+      </video>
 
       <p><b>Communications:</b></p> 
       <p>Worked on creating a function so the clock on the Arduino in the sensor is synced whenever it sends data to the Arduino collecting the data. Used NTP to sync the clock by sending packets from the receiver sensor to the sensor on the Arduino. Integrated the depth sensing code to the sensor and receiver code.</p>
@@ -27,9 +34,13 @@
       <p><b>Electronics:</b></p> 
       <p>This week, we figured out how the wires will be attached to the equipment. Each wire is tightly wrapped around the nail (clavo) before being secured back onto the device. So far, I was able to successfully attach one wire and nail connection, and we’ll be working on getting the remaining three attached next.
 
-      <p><b>Sensing:</b></p>
-      <p>We made graphs of the data from last week. We first used data from nitrate tests on known nitrate concentration levels following the test procedures. We found hue to be more accurate in predicting nitrate concentration compared to saturation and lightness. So with hue and concentration data, we created a line of best fit to predict nitrate concentrations in ppm from hue color levels. Error in nitrate concentration predictions was found to increase with the concentration of the nitrate solutions. Furthermore, a shaken reagent and unmixed solution for the second step of the API nitrate test was found to be the most accurate out of the three groups of unshaken reagent and solution, unshaken reagent and shaken solution, and shaken reagent and unshaken solution. Thus, we will proceed with tests and gather more data for predicting concentrations from nitrate tests with shaken reagent and unmixed solution.
-</p>
+      <p><b>Housing</b></p>
+      <p>Worked on finding optimal lengths for the water sensor body to maximize vertical stability in water. Traveled to Charles River to test. Result, longer PVC pipe with center of mass at the bottom creates more vertical stability. The less amount of PVC showing above the water allows for less effect on vertical stability from the wind.</p>
+
+       <p><b>Sensing:</b></p>
+      <p>We made graphs of the data from last week. We first used data from nitrate tests on known nitrate concentration levels following the test procedures. We found hue to be more accurate in predicting nitrate concentration compared to saturation and lightness. So with hue and concentration data, we created a line of best fit to predict nitrate concentrations in ppm from hue color levels. Error in nitrate concentration predictions was found to increase with the concentration of the nitrate solutions. Furthermore, a shaken reagent and unmixed solution for the second step of the API nitrate test was found to be the most accurate out of the three groups of unshaken reagent and solution, unshaken reagent and shaken solution, and shaken reagent and unshaken solution. Thus, we will proceed with tests and gather more data for predicting concentrations from nitrate tests with shaken reagent and unmixed solution.</p>
+
+      <p></p>
     </article>
   </main>
   <footer>© <span id="y"></span> Sensors for Restoration</footer>
