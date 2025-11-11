@@ -18,6 +18,7 @@ a{color:var(--brand); text-decoration:none}
 a:hover{opacity:.9}
 header{
   background:var(--brand); color:var(--bg); text-align:center; padding:56px 16px;
+  a{color:var(--brand2); text-decoration:none};
 }
 nav{margin-top:8px}
 nav a{margin:0 12px; font-weight:600}
