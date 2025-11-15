@@ -25,6 +25,51 @@
       <img src="Cad_picture.png" alt="Cad_picture" style="object-fit: cover; height: 400px;">
       <img src="Cad_picture2.png" alt="Cad_picture2" style="object-fit: cover; height: 400px;">
 
+      <p>Salinity</p>
+      <p>Tested resistance vs. known salinity of a fluid using a microwave to heat the water and dissolve the salts better. Discovered issues with water leaking into the experimental setup, which might've thrown off our data. Planning to run additional tests with more waterproofing.</p>
+      <p>Currently using temporary code that sends current in one direction. New code that reads more samples and sends alternating current is a next step.</p>
+      <h4> Code: </h4>
+      <p>
+        const int voltPin = 32;
+        const int outputPinRed = 33;
+        const int outputPinBlue = 23;
+        double deltaV;
+
+        const int R2 = 1000;
+        const double totalVoltage = 3.3;
+
+
+        void setup() {
+          pinMode(voltPin, INPUT);
+          pinMode(outputPinRed, OUTPUT);
+          pinMode(outputPinBlue, OUTPUT);
+          Serial.begin(115200);
+
+        }
+
+        void loop() {
+          // Alternating current 
+          digitalWrite(outputPinRed, HIGH);
+          digitalWrite(outputPinBlue, LOW);
+          
+          
+          // Find current using voltage drop across R2
+          deltaV = analogRead(voltPin);
+          deltaV *= 3.3;
+          deltaV /= 4096.0;
+          Serial.println(deltaV);
+          double current = deltaV / R2;
+
+          // Find R1 
+          double remainingVoltage = totalVoltage - deltaV;
+          double R1 = remainingVoltage / current;
+          Serial.printf("R1 is %f\n", R1);
+
+          // wait
+          delay(1000); 
+        }
+      </p>
+
       <p><b>Depth Sensor Comparison </b></p>
       
       <table border="1" cellpadding="6" cellspacing="0">
@@ -73,6 +118,7 @@
 
 
     </article>
+    
   </main>
   <footer>© <span id="y"></span> Sensors for Restoration</footer>
   <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
