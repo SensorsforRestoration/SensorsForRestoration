@@ -35,7 +35,7 @@
       <h4>New Salinity Code:</h4>
       <p>
         int voltPin = 32;
-        int dtime = 250;
+        int dtime = 500;
         int raw = 0;
         float Vin = 3.3;
         float Vout = 0;
@@ -54,37 +54,27 @@
           Serial.begin(115200); // start serial
         }
 
-        void loop() {
+        void loop(){
           float tot = 0;
-
-          for (int i = 0; i < samples; i++) {
-
-            // --- Phase 1: +V ---
-            digitalWrite(outputPinBlue, HIGH);
-            digitalWrite(outputPinRed, LOW);
+          for (int i =0; i<samples; i++) {
+            digitalWrite(outputPinBlue,HIGH);
+            digitalWrite(outputPinRed,LOW);
             delayMicroseconds(dtime);
-            int rawPos = analogRead(voltPin);    // read in middle of +V phase
+            digitalWrite(outputPinBlue,LOW);
+            digitalWrite(outputPinRed,HIGH);
             delayMicroseconds(dtime);
-
-            // --- Phase 2: -V ---
-            digitalWrite(outputPinBlue, LOW);
-            digitalWrite(outputPinRed, HIGH);
-            delayMicroseconds(dtime);
-            int rawNeg = analogRead(voltPin);    // read in middle of -V phase
-            delayMicroseconds(dtime);
-
-            // Convert raw readings to resistance
-            float rawAvg = (rawPos + rawNeg) / 2.0;
-
-            float Vout = (rawAvg * Vin) / 4096.0;
-            float R2 = R1 * ((Vin / Vout) - 1.0);
-
-            tot += R2;
+            raw = analogRead(voltPin);
+            if(raw){
+              buff = raw * Vin;
+              Vout = (buff)/4096.0;
+              buff = (Vin/Vout) - 1;
+              R2= R1 * buff;
+              tot = tot + R2;
+            }
           }
-
-          avg = tot / samples;
+          avg = tot/samples;
           Serial.print(avg);
-          Serial.println(" Ohms");
+          Serial.println(" Ohm");
         }
       </p>
       
