@@ -2,14 +2,14 @@
 #include <stdint.h>
 
 // Sensor readings taken at predetermined intervals.
-typedef struct
+typedef __attribute__((packed)) struct
 {
     float depth[360];
     float temperature[1];
     float salinity[2];
 } data;
 
-typedef struct
+typedef __attribute__((packed)) struct
 {
     // sequence_id is the sequence of packets this packet belong to.
     // Each sequence is all the data for a period of time, probably
@@ -23,7 +23,7 @@ typedef struct
     uint16_t total;
 
     // timestamp is the time of the start of the data in this packet.
-    uint64_t timestamp;
+    uint32_t timestamp;
 
     // sensor_id is the sensor this packet is coming from.
     uint16_t sensor_id;
@@ -32,7 +32,7 @@ typedef struct
     data payload;
 } packet_t;
 
-typedef struct
+typedef __attribute__((packed)) struct
 {
     uint64_t timestamp;
 } time_sync_packet_t;

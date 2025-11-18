@@ -20,9 +20,10 @@ RTC_SLOW_ATTR int count = 0;
 RTC_SLOW_ATTR uint32_t packet_num = 0;
 
 const int wakeup_time_sec = 1;
-uint8_t receiver_mac[] = {0x3C, 0xE9, 0x0E, 0x72, 0x0A, 0xFC};
+uint8_t receiver_mac[] = {0x34, 0x5F, 0x45, 0x37, 0x8C, 0xA4};
 
-void setup_gpio() {
+void setup_gpio()
+{
     esp_rom_gpio_pad_select_gpio(TRIG_PIN);
     gpio_set_direction(TRIG_PIN, GPIO_MODE_OUTPUT);
     esp_rom_gpio_pad_select_gpio(ECHO_PIN);
@@ -65,15 +66,15 @@ static void init_esp_now(void)
 
 static void send_packet(void)
 {
+    init_esp_now();
+
     packet_t packet = {0};
 
     packet.packet_num = packet_num++;
-    packet.timestamp = time(NULL);
     // esp_read_mac(packet.sensor_id, 123);
-
     memcpy(&packet.payload, &current_data, sizeof(data));
 
-    ESP_LOGI(TAG, "Initialising ESP-NOW and sending full packet...");
+    ESP_LOGI(TAG, "Sending full packet...");
 
     esp_err_t result = esp_now_send(receiver_mac, (uint8_t *)&packet, sizeof(packet));
     if (result == ESP_OK)
@@ -88,43 +89,42 @@ static void send_packet(void)
     vTaskDelay(pdMS_TO_TICKS(100));
 }
 
-
-//check and change this code
-float readDistance() {
+// check and change this code
+float readDistance()
+{
     gpio_set_level(TRIG_PIN, 0);
-    //esp_timer_delete(2); //debug this part
+    // esp_timer_delete(2); //debug this part
     gpio_set_level(TRIG_PIN, 1);
-    //esp_timer_delete(10); //debug this part
+    // esp_timer_delete(10); //debug this part
     gpio_set_level(TRIG_PIN, 0);
-  
+
     uint64_t pulse_start = 0;
     uint64_t pulse_end = 0;
-  
-    while(gpio_get_level(ECHO_PIN) == 0) 
+
+    while (gpio_get_level(ECHO_PIN) == 0)
     {
         // Do nothing or handle timeout
     }
-  
+
     pulse_start = esp_timer_get_time();
-  
-    while(gpio_get_level(ECHO_PIN) == 1) 
+
+    while (gpio_get_level(ECHO_PIN) == 1)
     {
         // Do nothing or handle timeout
     }
 
     pulse_end = esp_timer_get_time();
-  
+
     uint64_t duration = pulse_end - pulse_start;
 
     float distance = duration * 0.0344 / 2; // 0.0344 cm/µs for speed of sound in air
     return distance;
-
 }
 
 void sensor(void)
 {
     setup_gpio();
-    
+
     gpio_reset_pin(TRIG_PIN);
     gpio_set_direction(TRIG_PIN, GPIO_MODE_OUTPUT);
 
@@ -132,7 +132,7 @@ void sensor(void)
     gpio_set_direction(ECHO_PIN, GPIO_MODE_INPUT);
 
     count++;
-    current_data.depth[count] = readDistance();
+    // current_data.depth[count] = readDistance();
 
     if (count % 5 == 0)
     {
