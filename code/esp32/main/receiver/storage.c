@@ -43,6 +43,8 @@ esp_err_t storage_init(void)
         .quadwp_io_num = -1,
         .quadhd_io_num = -1,
         .max_transfer_sz = 4000,
+        .flags = SPICOMMON_BUSFLAG_MASTER | SPICOMMON_BUSFLAG_MISO |
+                 SPICOMMON_BUSFLAG_MOSI | SPICOMMON_BUSFLAG_SCLK,
     };
 
     gpio_set_pull_mode(MOSI_PIN, GPIO_PULLUP_ONLY);
@@ -81,10 +83,17 @@ esp_err_t write_packet_file(packet_t *packet, char *packet_key)
     FILE *f = fopen(file_name, "w");
     if (f == NULL)
     {
+        free(file_name);
         return ESP_FAIL;
     }
 
-    fprintf(f, "cool");
+    size_t written_items = fwrite(packet, sizeof(packet_t), 1, f);
+    if (written_items != 1)
+    {
+        free(file_name);
+        return ESP_FAIL;
+    }
+
     fclose(f);
 
     free(file_name);
@@ -92,14 +101,45 @@ esp_err_t write_packet_file(packet_t *packet, char *packet_key)
     return ESP_OK;
 }
 
+uint32_t fnv1a_hash(const void *data, size_t len)
+{
+    uint32_t hash = 0x811C9DC5;
+    const uint8_t *bytes = data;
+
+    for (size_t i = 0; i < len; i++)
+    {
+        hash ^= bytes[i];
+        hash *= 0x01000193;
+    }
+
+    return hash;
+}
+
+uint32_t hash_packet(uint16_t sensor_id, uint16_t sequence_id, uint16_t packet_num)
+{
+    uint32_t h = 0;
+
+    h ^= fnv1a_hash(&sensor_id, sizeof(sensor_id));
+    h ^= fnv1a_hash(&sequence_id, sizeof(sequence_id));
+    h ^= fnv1a_hash(&packet_num, sizeof(packet_num));
+
+    return h;
+}
+
+uint32_t hash_sequence(uint16_t sensor_id, uint16_t sequence_id)
+{
+    uint32_t h = 0;
+
+    h ^= fnv1a_hash(&sensor_id, sizeof(sensor_id));
+    h ^= fnv1a_hash(&sequence_id, sizeof(sequence_id));
+
+    return h;
+}
+
 esp_err_t store_packet(packet_t *packet, bool *received_all)
 {
-    char packet_key[16];
-    snprintf(packet_key, sizeof(packet_key),
-             "p%02x%04x%02x",
-             packet->sensor_id & 0xFF,
-             packet->sequence_id & 0xFFFF,
-             packet->packet_num & 0xFF);
+    char packet_key[9];
+    snprintf(packet_key, sizeof(packet_key), "%08" PRIX32, hash_packet(packet->sensor_id, packet->sequence_id, packet->packet_num));
 
     bool new_packet = false;
     esp_err_t err = nvs_find_key(namespace, packet_key, NULL);
@@ -120,9 +160,8 @@ esp_err_t store_packet(packet_t *packet, bool *received_all)
         }
     }
 
-    char sequence_key[16];
-    snprintf(sequence_key, sizeof(sequence_key),
-             "s%02x%04x", packet->sensor_id & 0xFF, packet->sequence_id & 0xFFFF);
+    char sequence_key[9];
+    snprintf(sequence_key, sizeof(sequence_key), "%08" PRIX32, hash_sequence(packet->sensor_id, packet->sequence_id));
 
     uint8_t packets_received = 0;
     err = nvs_get_u8(namespace, sequence_key, &packets_received);
