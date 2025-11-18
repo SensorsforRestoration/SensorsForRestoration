@@ -22,5 +22,5 @@ Notes
 
 - Prices are ballpark estimates (consumer hobbyist retail) as of 2025‑11‑18 and will vary by supplier, quantity, shipping and taxes.
 - Weights are approximate based on typical small parts; they exclude packaging and any large enclosures or extra batteries.
-- If you want a CSV or a vendor‑linked BOM (Mouser/AliExpress/Adafruit), tell me which vendors and I can add SKU links.
+- Vendor‑linked BOM (Mouser/AliExpress/Adafruit) work in progress
 
