@@ -16,7 +16,9 @@ Estimated prices and weights for the core parts used in the project. Prices are 
 | Reactant C (reagent bottle) | 1 | 5.00 | 50 | 5.00 | 50 |
 | Miscellaneous (wiring, connectors, screws, enclosure bits) | 1 | 10.00 | 80 | 10.00 | 80 |
 
-| **Totals** |  |  |  | **95.00 USD** | **656 g** |
+| 4" PVC pipe (~35 cm length) | 1 | 6.00 | 500 | 6.00 | 500 |
+
+| **Totals** |  |  |  | **101.00 USD** | **1,156 g** |
 
 Notes
 
