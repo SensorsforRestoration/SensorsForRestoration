@@ -27,8 +27,68 @@
       <p> Additionally, added masses and altered the volumes to fit the measurements made in class, along with the material types of each.
         Currently working on the simulation part - found center of mass and center of gravity - currently figuring out how to model the actual buoyancy
         and simulate in fusion</p>
+      <p><b>Salinity (new)</b></p>
+      <p>
+        Gathered data on Friday comparing resistance to known salinity, but upon comparison to older data from materials tests realized the standard deviations & values were off. I am reasonably certain it has to do with the code. I don't think Friday's data is terrible, but if there is time, redoing the test with the new code might be beneficial in having a more accurate salinity/resistance map. 
+      </p>
 
-      <p>Salinity</p>
+      <h4>New Salinity Code:</h4>
+      <p>
+        int voltPin = 32;
+        int dtime = 250;
+        int raw = 0;
+        float Vin = 3.3;
+        float Vout = 0;
+        float R1 = 1000;
+        float R2 = 0;
+        float buff = 0;
+        float avg = 0;
+        int samples = 5000;
+        int outputPinBlue = 23;
+        int outputPinRed = 33;
+
+        void setup(){
+          pinMode(outputPinRed,OUTPUT); 
+          pinMode(outputPinBlue,OUTPUT);
+          pinMode(voltPin, INPUT);
+          Serial.begin(115200); // start serial
+        }
+
+        void loop() {
+          float tot = 0;
+
+          for (int i = 0; i < samples; i++) {
+
+            // --- Phase 1: +V ---
+            digitalWrite(outputPinBlue, HIGH);
+            digitalWrite(outputPinRed, LOW);
+            delayMicroseconds(dtime);
+            int rawPos = analogRead(voltPin);    // read in middle of +V phase
+            delayMicroseconds(dtime);
+
+            // --- Phase 2: -V ---
+            digitalWrite(outputPinBlue, LOW);
+            digitalWrite(outputPinRed, HIGH);
+            delayMicroseconds(dtime);
+            int rawNeg = analogRead(voltPin);    // read in middle of -V phase
+            delayMicroseconds(dtime);
+
+            // Convert raw readings to resistance
+            float rawAvg = (rawPos + rawNeg) / 2.0;
+
+            float Vout = (rawAvg * Vin) / 4096.0;
+            float R2 = R1 * ((Vin / Vout) - 1.0);
+
+            tot += R2;
+          }
+
+          avg = tot / samples;
+          Serial.print(avg);
+          Serial.println(" Ohms");
+        }
+      </p>
+      
+      <p><b>Salinity</b></p>
       <p>Tested resistance vs. known salinity of a fluid using a microwave to heat the water and dissolve the salts better. Discovered issues with water leaking into the experimental setup, which might've thrown off our data. Planning to run additional tests with more waterproofing.</p>
       <p>Currently using temporary code that sends current in one direction. New code that reads more samples and sends alternating current is a next step.</p>
       <h4> Code: </h4>
