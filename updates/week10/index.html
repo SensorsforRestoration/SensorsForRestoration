@@ -58,10 +58,10 @@
       <p><b>Electronics Water Depth</b></p>
       <p>Wired and adapted Arduino code to ESP32 for "Superior" Ultrasonic Water Depth Sensor. This sensor uses UART communication with a minimum range from 0 centimeters to 6 feet!</p>
       <img src="IMG_2702.JPG" alt="Working Ultrasonic Depth Sensor" style="max-width:100%;height:auto">
+      <h3>DYP-L04 "Superior" Ultrasonic Sensor UART Code Adapted for ESP32 (Measures in Centimeters)</h3>
       <pre><code class="language-cpp">
         unsigned char buffer_RTT[4] = {0};
         uint8_t CS; //check sum 
-        
         
         //defines pins and BAUD rate
         #define COM 0x55
@@ -71,7 +71,6 @@
         
         //intializes class
         HardwareSerial sillySerial(2);
-        
         
         int Distance = 0;
         void setup() {
