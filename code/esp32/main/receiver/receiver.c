@@ -13,6 +13,7 @@
 #include "sys/time.h"
 #include "receiver/storage.h"
 #include "receiver/display.h"
+#include "receiver/gps.h"
 
 static const char *TAG = "RECEIVER";
 
@@ -50,6 +51,17 @@ static void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *d, int 
 
     bool received_all = false;
     ESP_ERROR_CHECK(store_packet(&received, &received_all));
+
+    char line[128];
+    esp_err_t err = gps_read_line(line, sizeof(line));
+    if (err == ESP_OK)
+    {
+        ESP_LOGI(TAG, "LINE: %s", line);
+    }
+    else
+    {
+        ESP_LOGI(TAG, "GPS ERROR: %s", err);
+    }
 }
 
 static void init_sntp(void)
@@ -111,8 +123,7 @@ void time_sync_task(void *pvParam)
 void receiver(void)
 {
     // Uncomment for testing:
-    // ESP_ERROR_CHECK(nvs_flash_erase());
-
+    ESP_ERROR_CHECK(nvs_flash_erase());
     ESP_ERROR_CHECK(nvs_flash_init());
 
     // Init Wi-Fi in STA mode
@@ -133,11 +144,13 @@ void receiver(void)
 
     display_init();
 
-    init_sntp();
+    ESP_ERROR_CHECK(gps_init());
+
+    // init_sntp();
 
     ESP_LOGI(TAG, "ESP-NOW receiver ready");
 
-    xTaskCreate(time_sync_task, "time_sync_task", 4096, NULL, 5, NULL);
+    // xTaskCreate(time_sync_task, "time_sync_task", 4096, NULL, 5, NULL);
 
     static packet_t packet_1 = {
         .sequence_id = 12,
@@ -151,12 +164,21 @@ void receiver(void)
         .total = 2,
     };
 
-    /*
-    bool received_all = false;
+    char line[128];
+    esp_err_t err = gps_read_line(line, sizeof(line));
+    if (err == ESP_OK)
+    {
+        ESP_LOGI(TAG, "LINE: %s", line);
+    }
+    else
+    {
+        ESP_LOGI(TAG, "GPS ERROR: %s", err);
+    }
+
+    /*bool received_all = false;
 
     ESP_ERROR_CHECK(store_packet(&packet_1, &received_all));
     ESP_LOGI(TAG, "received all: %s", received_all ? "true" : "false");
     ESP_ERROR_CHECK(store_packet(&packet_2, &received_all));
-    ESP_LOGI(TAG, "received all: %s", received_all ? "true" : "false");
-    */
+    ESP_LOGI(TAG, "received all: %s", received_all ? "true" : "false");*/
 }
