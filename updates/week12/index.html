@@ -20,7 +20,15 @@
   <main>
     <article class="card update">
       <h3>Week 12 Team Updates</h3>
-      <p></p>
+
+      <p>Salinity Sensing</p>
+      <p> I modified our salinity code after watching Pierre Hertzog’s <a href='https://www.youtube.com/watch?v=-xKIczj9rVA'>“EC Hydroponics”</a> video. I first attempted to replicate his very simple approach. The method he uses is a simple divider like we've been doing, but what's different is that it uses a short-pulse routine that samples at a fixed instant and then rests, rather than holding one side high for a full second and grabbing a single read. Our previous code sets one pin high and the other low, reads the ADC right away, and solves for water resistance without any timing control, which lets the electrode interface wander and makes the readings unstable. The new code drives the probe for a hundred microseconds, waits that same fixed delay each time, takes a tight burst of reads and uses the median, then idles for six seconds so the interface relaxes. It converts the measured resistance to mS (milliSiemens) per cm using a cell constant K (which I got from a calibration routine using a 12 ppt solution) and includes guard checks for open or short cases and ADC over or under range. </p>
+
+      <p> I used the same M8 hardware at first, but on further consideration I think we should switch to 3/32" 316SS welding rods (same as the video, but we'll eventually use 4 instead of 2). It's cheaper, easier to make connections to, and as far as I can tell are better geometry (the threads of the screws can trap bubbles or promote fouling, and I can't find any advantage for having larger probes). The circuit for the 2 probe version is essentially the same as before: One probe lead goes through a 1k series resistor to a GPIO that briefly drives high. The junction voltage is read on an analog pin, then the pin goes low to rest. From that single snapshot I compute the water resistance, convert to EC, and apply a cell constant K that I previously calibrated. I rewrote the ESP32 code so it sends one short pulse, samples at a fixed instant, takes a tight burst median to tame jitter, and waits six seconds before the next pulse to keep the interface quiet. I am running ECPower on GPIO23 and EC_Read on GPIO34 with R1 of 1000 ohms. </p>
+
+      <p>The code that I'm using <a href='./salinity_no_temp.txt'>requires no thermistor</a>. Next, I'll modify this to use 4 electrodes and the AC method, and will integrate the temperature reading as well. </p>
+
+
     </article>
   </main>
   <footer>© <span id="y"></span> Sensors for Restoration</footer>

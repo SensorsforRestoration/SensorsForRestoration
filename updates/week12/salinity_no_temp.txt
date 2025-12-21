@@ -1,0 +1,122 @@
+// ESP32 EC (video-style DC), no thermistor — microsecond sampling to avoid polarization drift
+// Pins: probe -> 680Ω..1kΩ -> GPIO23 (ECPower)
+//       junction -> GPIO34 (EC_Read, ADC1)
+//       other probe -> GND
+
+#include <Arduino.h>
+
+// ---- Pins & hardware ----
+const int   ECPower = 23;
+const int   EC_Read = 34;       // ADC1 channel
+const float Vin     = 3.30;     // 3V3
+int         R1      = 1000;     // 680Ω or 1kΩ both fine
+
+// ---- Calibration target (12 ppt @25C ≈ 19.27 mS/cm), used only in Calibrate() ----
+const float Cal_ppt        = 12.0f;
+const float mScm_per_ppt25 = 56.2f / 35.0f;           // ≈1.605714
+const float Cal_mScm_room  = Cal_ppt * mScm_per_ppt25;
+
+// ---- User constant (set after Calibrate) ----
+float K = 1.488118f;   // <- use your last good K; run Calibrate() to update if needed
+
+// ---- Display (optional) ----
+const float PPM_Con = 0.50f;
+
+// ---- Timing: sample before polarization grows ----
+const uint32_t SETTLE_US   = 80;     // 80 µs after rising edge
+const uint8_t  BURST_READS = 21;     // take 21 very-fast reads, median them
+const uint32_t IDLE_MS     = 6000;   // like the video
+
+// ---- Internals ----
+uint16_t A_to_D=0;
+float Vdrop=0, Rwater=0, EC=0, EC_disp=0; int ppm=0;
+
+// Fast burst sample right after the step
+static uint16_t burstMedian() {
+  uint16_t v[BURST_READS];
+
+  // drive high
+  digitalWrite(ECPower, HIGH);
+  delayMicroseconds(SETTLE_US);
+
+  // tight loop of ADC reads (very low duty cycle overall)
+  for (uint8_t i=0;i<BURST_READS;i++) {
+    v[i] = analogRead(EC_Read);
+  }
+
+  // release
+  digitalWrite(ECPower, LOW);
+
+  // insertion sort small array
+  for (int i=1;i<BURST_READS;i++){
+    uint16_t key=v[i]; int j=i-1;
+    while (j>=0 && v[j]>key){ v[j+1]=v[j]; j--; }
+    v[j+1]=key;
+  }
+  return v[BURST_READS/2];
+}
+
+void setup() {
+  Serial.begin(115200);
+
+  // Optional: reduce ADC jitter sources
+  // WiFi.mode(WIFI_OFF); btStop();  // uncomment if using Arduino core WiFi/BLE
+
+  pinMode(EC_Read, INPUT);
+  pinMode(ECPower, OUTPUT);
+  digitalWrite(ECPower, LOW);
+
+  analogReadResolution(12);                    // 0..4095
+  analogSetPinAttenuation(EC_Read, ADC_11db);  // ~0..3.3 V FS
+
+  // Calibrate(); // run once if you want to recompute K at 12 ppt
+}
+
+void loop() {
+  A_to_D = burstMedian();
+
+  if (A_to_D < 5)    { Serial.println("LOW RANGE / SHORT?");  delay(IDLE_MS); return; }
+  if (A_to_D > 4090) { Serial.println("HIGH RANGE / OPEN?");  delay(IDLE_MS); return; }
+
+  Vdrop  = (Vin * A_to_D) / 4095.0f;
+  float d = Vin - Vdrop; if (d < 0.01f){ Serial.println("Range error"); delay(IDLE_MS); return; }
+
+  Rwater = (Vdrop * R1) / d;                // ohms
+  EC     = 1000.0f / (Rwater * K);          // mS/cm at room temp
+  EC_disp= EC;
+  ppm    = (int)(EC_disp * (PPM_Con * 1000.0f));
+
+  Serial.print("ADC=");   Serial.print((int)A_to_D);
+  Serial.print("  V=");   Serial.print(Vdrop,3);
+  Serial.print("  R=");   Serial.print(Rwater,1);
+  Serial.print("  EC=");  Serial.print(EC_disp,3); Serial.print(" mS/cm  ");
+  Serial.print(ppm);      Serial.println(" ppm");
+
+  delay(IDLE_MS);
+}
+
+void Calibrate() {
+  Serial.print("Calibration — 12 ppt (~");
+  Serial.print(Cal_mScm_room,2);
+  Serial.println(" mS/cm @25C), room temp.");
+
+  // average 10 burst-medians
+  float sum=0;
+  for (int i=0;i<10;i++){ sum += burstMedian(); delay(IDLE_MS); }
+  A_to_D = sum/10.0f;
+
+  if (A_to_D < 5)    { Serial.println("LOW RANGE during cal"); return; }
+  if (A_to_D > 4090) { Serial.println("HIGH RANGE during cal"); return; }
+
+  float V = (Vin * A_to_D) / 4095.0f;
+  float d = Vin - V; if (d < 0.01f){ Serial.println("Range error during cal"); return; }
+  float R = (V * R1) / d;
+
+  float K_cal = 1000.0f / (R * Cal_mScm_room);
+  Serial.println();
+  Serial.print("Replace K with: "); Serial.println(K_cal,6);
+  Serial.print("ADC="); Serial.print((int)A_to_D);
+  Serial.print("  V=");  Serial.print(V,3);
+  Serial.print("  R=");  Serial.println(R,1);
+  Serial.println("Comment out Calibrate() and reflash.");
+}
