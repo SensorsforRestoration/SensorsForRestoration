@@ -24,6 +24,8 @@
 
   <xmp id="strapcontent" style="display:none;"></xmp>
 
+  <div id="content" class="container"></div>
+
   <script>
   (async function(){
     const files = ['BOM.md','pin_table.md'];
@@ -37,8 +39,20 @@
     }
     const x = document.getElementById('strapcontent');
     x.innerText = md;
+
     const s = document.createElement('script');
     s.src = '../strapdown.js';
+    // When strapdown (which exposes `marked`) finishes loading, render markdown into #content
+    s.onload = function(){
+      try{
+        const html = (typeof marked === 'function') ? marked(md) : x.innerText;
+        const container = document.getElementById('content');
+        container.innerHTML = html;
+        // style tables simply
+        const tables = container.getElementsByTagName('table');
+        for(let i=0;i<tables.length;i++){ tables[i].style.width='100%'; tables[i].style.borderCollapse='collapse'; tables[i].style.margin='12px 0'; tables[i].querySelectorAll && Array.from(tables[i].querySelectorAll('th,td')).forEach(td=>{td.style.border='1px solid #cfd8c3'; td.style.padding='6px';}); }
+      }catch(e){ console.error('render error', e); }
+    };
     document.body.appendChild(s);
   })();
   </script>
