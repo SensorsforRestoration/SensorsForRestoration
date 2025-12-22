@@ -24,7 +24,13 @@
 
   <xmp id="strapcontent" style="display:none;"></xmp>
 
-  <div id="content" class="container"></div>
+  <div class="build-layout">
+    <aside id="toc" aria-label="Table of contents">
+      <h3>Contents</h3>
+      <ul></ul>
+    </aside>
+    <main id="content" class="container"></main>
+  </div>
 
   <script>
   (async function(){
@@ -48,9 +54,33 @@
         const html = (typeof marked === 'function') ? marked(md) : x.innerText;
         const container = document.getElementById('content');
         container.innerHTML = html;
+
+        // add ids to headings and build TOC
+        const tocList = document.querySelector('#toc ul');
+        const headings = container.querySelectorAll('h1, h2, h3');
+        function slugify(s){ return s.toString().toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+        headings.forEach((h)=>{
+          const text = h.textContent || h.innerText || 'section';
+          const id = slugify(text);
+          // ensure unique id
+          let uid = id, i=1;
+          while(document.getElementById(uid)) { uid = id + '-' + (i++); }
+          h.id = uid;
+          const li = document.createElement('li');
+          const a = document.createElement('a');
+          a.href = '#'+uid;
+          a.textContent = text;
+          a.addEventListener('click', (ev)=>{ ev.preventDefault(); document.getElementById(uid).scrollIntoView({behavior:'smooth', block:'start'}); history.replaceState(null,'', '#'+uid); });
+          li.appendChild(a);
+          tocList.appendChild(li);
+        });
+
         // style tables simply
         const tables = container.getElementsByTagName('table');
-        for(let i=0;i<tables.length;i++){ tables[i].style.width='100%'; tables[i].style.borderCollapse='collapse'; tables[i].style.margin='12px 0'; tables[i].querySelectorAll && Array.from(tables[i].querySelectorAll('th,td')).forEach(td=>{td.style.border='1px solid #cfd8c3'; td.style.padding='6px';}); }
+        for(let i=0;i<tables.length;i++){
+          tables[i].style.width='100%'; tables[i].style.borderCollapse='collapse'; tables[i].style.margin='12px 0';
+          if(tables[i].querySelectorAll) Array.from(tables[i].querySelectorAll('th,td')).forEach(td=>{td.style.border='1px solid #cfd8c3'; td.style.padding='8px';});
+        }
       }catch(e){ console.error('render error', e); }
     };
     document.body.appendChild(s);
