@@ -53,11 +53,19 @@
     s.src = '../strapdown.js';
     s.onload = function(){
       try{
-        // strapdown.js has already parsed the markdown from the <xmp> and
-        // replaced it with a generated div#content. Now build the TOC and
-        // apply table styling. Use the rendered DOM rather than re-parsing.
+        // strapdown.js should parse the markdown from the <xmp> and replace
+        // it with a generated div#content. If that didn't happen (raw
+        // markdown still present), fall back to using the bundled `marked`
+        // parser to render the markdown into HTML so TOC generation works.
         const container = document.getElementById('content');
         if(!container) return;
+
+        // If strapdown didn't render headings (container starts with '#'),
+        // render with marked as a fallback.
+        const firstChildText = (container.childNodes[0] && container.childNodes[0].nodeType===3) ? container.childNodes[0].textContent.trim() : '';
+        if((!container.querySelector('h1') && firstChildText.startsWith('#')) && typeof marked !== 'undefined'){
+          try{ marked.setOptions({ gfm:true, tables:true }); container.innerHTML = marked(md); }catch(e){ console.warn('marked fallback failed', e); }
+        }
 
         const tocRoot = document.querySelector('#toc ul');
         tocRoot.innerHTML = '';
