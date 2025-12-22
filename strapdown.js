@@ -371,20 +371,19 @@ var PR=win['PR']={'createSimpleLexer':createSimpleLexer,'registerLangHandler':re
   theme = theme.toLowerCase();
 
   // Stylesheets
-  var linkEl = document.createElement('link');
-  linkEl.href = originBase + '/themes/'+theme+'.min.css';
-  linkEl.rel = 'stylesheet';
-  document.head.appendChild(linkEl);
-
-  var linkEl = document.createElement('link');
-  linkEl.href = originBase + '/strapdown.css';
-  linkEl.rel = 'stylesheet';
-  document.head.appendChild(linkEl);
-
-  var linkEl = document.createElement('link');
-  linkEl.href = originBase + '/themes/bootstrap-responsive.min.css';
-  linkEl.rel = 'stylesheet';
-  document.head.appendChild(linkEl);
+  // NOTE: Original Strapdown injects theme and stylesheet links relative to the
+  // script origin. On GitHub Pages these files are often not present and cause
+  // repeated 404s. Avoid injecting missing styles here; rely on the site's
+  // global stylesheet. Instead, add a small inline favicon to prevent /favicon.ico
+  // 404s (browsers will prefer explicit icons over fetching /favicon.ico).
+  try {
+    var iconLink = document.createElement('link');
+    iconLink.rel = 'icon';
+    iconLink.href = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><rect width="100%" height="100%" fill="#4b7"/></svg>');
+    document.head.appendChild(iconLink);
+  } catch (e) {
+    // non-fatal
+  }
 
   //////////////////////////////////////////////////////////////////////
   //
@@ -396,7 +395,14 @@ var PR=win['PR']={'createSimpleLexer':createSimpleLexer,'registerLangHandler':re
   var newNode = document.createElement('div');
   newNode.className = 'container';
   newNode.id = 'content';
-  document.body.replaceChild(newNode, markdownEl);
+  // Replace the markdown node where it lives (may be nested), instead of
+  // assuming it's a direct child of <body>. This prevents "Child to be
+  // replaced is not a child of this node" DOMExceptions.
+  if (markdownEl && markdownEl.parentNode) {
+    markdownEl.parentNode.replaceChild(newNode, markdownEl);
+  } else {
+    try { document.body.replaceChild(newNode, markdownEl); } catch (e) { /* ignore */ }
+  }
 
   // Insert navbar if there's none
   var newNode = document.createElement('div');
