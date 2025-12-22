@@ -54,61 +54,73 @@
     s.src = '../strapdown.js';
     s.onload = function(){
       try{
-        // Wait for Strapdown to replace the <xmp> with div#content.
-        const observer = new MutationObserver((mutations, obs) => {
+        // Post-render logic: run immediately if Strapdown already produced
+        // div#content, otherwise observe mutations until it appears.
+        const doPostRender = () => {
           const container = document.getElementById('content');
           if(!container) return;
-          obs.disconnect();
-
           // Build hierarchical TOC by scanning rendered headings in DOM.
           const tocRoot = document.querySelector('#toc ul');
           tocRoot.innerHTML = '';
           function slugify(s){ return s.toString().toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
 
           const headings = Array.from(container.querySelectorAll('h1,h2,h3'));
-        let currentGroup = null;
-        headings.forEach((h)=>{
-          const level = parseInt(h.tagName.substring(1),10);
-          const text = h.textContent.trim();
-          let base = slugify(text) || 'section';
-          let uid = base; let c=1; while(document.getElementById(uid)){ uid = base + '-' + (c++); }
-          h.id = uid;
+          let currentGroup = null;
+          headings.forEach((h)=>{
+            const level = parseInt(h.tagName.substring(1),10);
+            const text = h.textContent.trim();
+            let base = slugify(text) || 'section';
+            let uid = base; let c=1; while(document.getElementById(uid)){ uid = base + '-' + (c++); }
+            h.id = uid;
 
-          if(level === 1){
-            currentGroup = document.createElement('li');
-            const strong = document.createElement('strong');
-            strong.textContent = text;
-            currentGroup.appendChild(strong);
-            const sub = document.createElement('ul');
-            currentGroup.appendChild(sub);
-            tocRoot.appendChild(currentGroup);
-            return;
+            if(level === 1){
+              currentGroup = document.createElement('li');
+              const strong = document.createElement('strong');
+              strong.textContent = text;
+              currentGroup.appendChild(strong);
+              const sub = document.createElement('ul');
+              currentGroup.appendChild(sub);
+              tocRoot.appendChild(currentGroup);
+              return;
+            }
+
+            if(!currentGroup){
+              currentGroup = document.createElement('li');
+              const strong = document.createElement('strong');
+              strong.textContent = 'Contents';
+              currentGroup.appendChild(strong);
+              const sub = document.createElement('ul');
+              currentGroup.appendChild(sub);
+              tocRoot.appendChild(currentGroup);
+            }
+
+            const li = document.createElement('li');
+            li.style.marginLeft = (Math.max(0, level-2) * 10) + 'px';
+            const a = document.createElement('a');
+            a.href = '#'+uid;
+            a.textContent = text;
+            li.appendChild(a);
+            currentGroup.querySelector('ul').appendChild(li);
+          });
+
+          // style tables
+          const tables = container.getElementsByTagName('table');
+          for(let i=0;i<tables.length;i++){
+            tables[i].style.width='100%'; tables[i].style.borderCollapse='collapse'; tables[i].style.margin='12px 0';
+            if(tables[i].querySelectorAll) Array.from(tables[i].querySelectorAll('th,td')).forEach(td=>{td.style.border='1px solid #cfd8c3'; td.style.padding='8px';});
           }
+        };
 
-          if(!currentGroup){
-            currentGroup = document.createElement('li');
-            const strong = document.createElement('strong');
-            strong.textContent = 'Contents';
-            currentGroup.appendChild(strong);
-            const sub = document.createElement('ul');
-            currentGroup.appendChild(sub);
-            tocRoot.appendChild(currentGroup);
-          }
-
-          const li = document.createElement('li');
-          li.style.marginLeft = (Math.max(0, level-2) * 10) + 'px';
-          const a = document.createElement('a');
-          a.href = '#'+uid;
-          a.textContent = text;
-          li.appendChild(a);
-          currentGroup.querySelector('ul').appendChild(li);
-        });
-
-        // style tables
-        const tables = container.getElementsByTagName('table');
-        for(let i=0;i<tables.length;i++){
-          tables[i].style.width='100%'; tables[i].style.borderCollapse='collapse'; tables[i].style.margin='12px 0';
-          if(tables[i].querySelectorAll) Array.from(tables[i].querySelectorAll('th,td')).forEach(td=>{td.style.border='1px solid #cfd8c3'; td.style.padding='8px';});
+        if(document.getElementById('content')){
+          doPostRender();
+        }else{
+          const observer = new MutationObserver((mutations, obs) => {
+            if(document.getElementById('content')){
+              obs.disconnect();
+              doPostRender();
+            }
+          });
+          observer.observe(document.body, { childList: true, subtree: true });
         }
       }catch(e){ console.error('render error', e); }
     };

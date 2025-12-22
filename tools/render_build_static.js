@@ -1,0 +1,12 @@
+const fs = require('fs');
+const path = require('path');
+const marked = require(path.resolve(__dirname, '..', 'strapdown.js'));
+const buildDir = path.resolve(__dirname, '..', 'build');
+const templatePath = path.join(buildDir, 'index.html');
+let template = fs.readFileSync(templatePath,'utf8');
+const files = ['BOM.md','pin_table.md'].map(f=>fs.readFileSync(path.join(buildDir,f),'utf8'));
+const md = files.join('\n\n---\n\n');
+const html = marked.parse ? marked.parse(md) : marked(md);
+const out = template.replace(/<main id="content" class="container">[\s\S]*?<\/main>/, `<main id="content" class="container">\n${html}\n</main>`);
+fs.writeFileSync(templatePath,out,'utf8');
+console.log('Rendered static build/index.html');
