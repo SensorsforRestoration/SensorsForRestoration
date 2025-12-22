@@ -51,8 +51,12 @@
     s.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
     s.onload = function(){
       try{
-        // Render markdown into the page
-        const html = (typeof marked === 'function') ? marked(md) : x.innerText;
+        // Configure marked for GFM/tables and disable automatic header IDs
+        if(typeof marked !== 'undefined' && typeof marked.setOptions === 'function'){
+          marked.setOptions({ gfm: true, headerIds: false });
+        }
+        // Render markdown into the page (use marked.parse when available)
+        const html = (typeof marked !== 'undefined') ? (typeof marked.parse === 'function' ? marked.parse(md) : marked(md)) : x.innerText;
         const container = document.getElementById('content');
         container.innerHTML = html;
 
