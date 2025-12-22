@@ -27,7 +27,10 @@
       <h3>Contents</h3>
       <ul></ul>
     </aside>
-        <main id="content" class="container"></main>
+            <!-- strapdown expects an <xmp> element containing markdown; it will replace
+              this node with a generated div#content. Place it here so rendering
+              happens inside the build layout. -->
+            <xmp id="strapcontent" style="display:none;"></xmp>
   </div>
 
   <script>
@@ -41,31 +44,28 @@
         else { md += (md ? '\n\n---\n\n' : '') + `<!-- Failed to load ${f}: ${r.status} -->`; }
       }catch(e){ md += (md ? '\n\n---\n\n' : '') + `<!-- Error loading ${f}: ${e} -->`; }
     }
-    // Load `marked` (lightweight markdown parser) from CDN and render
+    // Load the local Strapdown parser you provided and let it render the
+    // markdown placed inside the <xmp id="strapcontent"> element. Then
+    // detect when Strapdown has produced the div#content and build the TOC.
+    const x = document.getElementById('strapcontent');
+    x.innerText = md;
+
     const s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
+    s.src = '../strapdown.js';
     s.onload = function(){
       try{
-        if(typeof marked !== 'undefined') marked.setOptions({ gfm:true, tables:true });
-        const container = document.getElementById('content');
-        if(!container) return;
-        // Render fetched markdown into container
-        try{ container.innerHTML = (typeof marked.parse === 'function') ? marked.parse(md) : marked(md); }catch(e){ container.textContent = md; console.error('marked render failed', e); }
-      try{
-        // strapdown.js should parse the markdown from the <xmp> and replace
-        // it with a generated div#content. If that didn't happen (raw
-        // markdown still present), fall back to using the bundled `marked`
-        // parser to render the markdown into HTML so TOC generation works.
-        // Build hierarchical TOC by scanning rendered headings in DOM.
-        const tocRoot = document.querySelector('#toc ul');
-        tocRoot.innerHTML = '';
-        function slugify(s){ return s.toString().toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+        // Wait for Strapdown to replace the <xmp> with div#content.
+        const observer = new MutationObserver((mutations, obs) => {
+          const container = document.getElementById('content');
+          if(!container) return;
+          obs.disconnect();
 
-        const tocRoot = document.querySelector('#toc ul');
-        tocRoot.innerHTML = '';
-        function slugify(s){ return s.toString().toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+          // Build hierarchical TOC by scanning rendered headings in DOM.
+          const tocRoot = document.querySelector('#toc ul');
+          tocRoot.innerHTML = '';
+          function slugify(s){ return s.toString().toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
 
-        const headings = Array.from(container.querySelectorAll('h1,h2,h3'));
+          const headings = Array.from(container.querySelectorAll('h1,h2,h3'));
         let currentGroup = null;
         headings.forEach((h)=>{
           const level = parseInt(h.tagName.substring(1),10);
