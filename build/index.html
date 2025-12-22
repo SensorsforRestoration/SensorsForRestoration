@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Build · Sensors for Restoration</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+  <header>
+    <h1>Build</h1>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="index.html">Build</a>
+      <a href="../updates.html">Updates</a>
+      <a href="../forum.html">Forum</a>
+      <a href="../about.html">About</a>
+      <a href="../contact.html">Contact</a>
+    </nav>
+  </header>
+
+  <div class="navbar navbar-fixed-top" style="z-index: -1;"></div>
+  <div id="header"></div>
+
+  <xmp id="strapcontent" style="display:none;"></xmp>
+
+  <script>
+  (async function(){
+    const files = ['BOM.md','pin_table.md'];
+    let md = '';
+    for(const f of files){
+      try{
+        const r = await fetch(f);
+        if(r.ok){ md += '\n\n' + await r.text(); }
+        else { md += `\n\n<!-- Failed to load ${f}: ${r.status} -->`; }
+      }catch(e){ md += `\n\n<!-- Error loading ${f}: ${e} -->`; }
+    }
+    const x = document.getElementById('strapcontent');
+    x.innerText = md;
+    const s = document.createElement('script');
+    s.src = '../strapdown.js';
+    document.body.appendChild(s);
+  })();
+  </script>
+
+  <footer>© <span id="y"></span> Sensors for Restoration</footer>
+  <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
+</body>
+</html>

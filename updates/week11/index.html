@@ -1,18 +1,17 @@
 <!doctype html>
 <html lang="en">
-
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Week 11 · Sensors for Restoration</title>
   <link rel="stylesheet" href="../../style.css" />
 </head>
-
 <body>
   <header>
     <h1>Project Updates — Week 11</h1>
     <nav>
       <a href="../../index.html">Home</a>
+      <a href="../../build/index.html">Build</a>
       <a href="../../updates.html">Updates</a>
       <a href="../../forum.html">Forum</a>
       <a href="../../about.html">About</a>
@@ -22,35 +21,10 @@
   <main>
     <article class="card update">
       <h3>Week 11 Team Updates</h3>
-      <p>Housing</p>
-      <p>Tested with point masses today, was not able to stabilize unless mass distribution was very close to perfectly
-        uniform, helping us realize that
-        sand worked well because of its uniform density and center of mass distribution - will have to calculate pretty
-        precisely when it comes to actually putting everything altogether.
-        We may require to print a few perfect circular disks that wil help stabilize and put everything on the same
-        plane. This will be pretty trivial tho.
-        Need to slowly start getting data about what we need to integrate for other teams.</p>
-      <p>Assembly</p>
-      <p>Designed a holder for the battery and the arduino, with the board and the capsule for detecting
-        the color of the solution. Currently its on the printer!
-      </p>
-      <p><b>Sensing</b></p>
-      <p>This week we measured the mass of ten drops of the nitrate reagent. We found that ten drops of nitrate reagent 1 was 0.360g and ten drops of nitrate reagent 2 was 0.308g. We used the maximum speed for the peristaltic pump and measured the time it took to pump these masses of reagent. To ensure accuracy while pumping, we needed to first fill the pipe for 1.4s. Then, we needed to also pump 5 mL of the sample which took 2.75s. The time it took to pump the equivalent amount of ten drops of nitrate was 250 ms.
-</p>
-      <p>Salinity</p>
-      <p>
-        Researched methods to secure wires onto screws. Found ring terminals and other joints are probably the best
-        option. Will continue with trying assembly with new materials next class.
-      </p>
-      <p><b>Communications</b></p>
-      <p>
-        Data from sensors can now be read off the SD card and uploaded to an InfluxDB instance. New code is in
-        <code>code/ingest/</code> and <code>code/platform/</code> respectively.
-      </p>
+      <p></p>
     </article>
   </main>
   <footer>© <span id="y"></span> Sensors for Restoration</footer>
   <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
 </body>
-
 </html>
