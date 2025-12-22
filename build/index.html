@@ -39,9 +39,9 @@
     for(const f of files){
       try{
         const r = await fetch(f);
-        if(r.ok){ md += '\n\n' + await r.text(); }
-        else { md += `\n\n<!-- Failed to load ${f}: ${r.status} -->`; }
-      }catch(e){ md += `\n\n<!-- Error loading ${f}: ${e} -->`; }
+        if(r.ok){ md += (md ? '\n\n---\n\n' : '') + await r.text(); }
+        else { md += (md ? '\n\n---\n\n' : '') + `<!-- Failed to load ${f}: ${r.status} -->`; }
+      }catch(e){ md += (md ? '\n\n---\n\n' : '') + `<!-- Error loading ${f}: ${e} -->`; }
     }
     const x = document.getElementById('strapcontent');
     x.innerText = md;
