@@ -1,3 +1,4 @@
+
 # Pin Table — Seeed Studio XIAO ESP32‑S3 Sense
 
 The table below assigns pins for:
@@ -87,4 +88,3 @@ This variant ties all L9110 “direction” inputs together so every pump revers
 | `D12 (A12)` | Salinity excitation B |
 | `3V3` | 3.3 V rail for logic/sensors |
 | `5V` | 5 V rail (USB or external) |
-| `GND` | Common ground |

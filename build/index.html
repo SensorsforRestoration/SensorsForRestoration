@@ -22,14 +22,15 @@
   <div class="navbar navbar-fixed-top" style="z-index: -1;"></div>
   <div id="header"></div>
 
-  <xmp id="strapcontent" style="display:none;"></xmp>
-
   <div class="build-layout">
     <aside id="toc" aria-label="Table of contents">
       <h3>Contents</h3>
       <ul></ul>
     </aside>
-    <main id="content" class="container"></main>
+    <!-- strapdown expects an <xmp> element containing markdown; it will replace
+         this node with a generated div#content. Place it here so rendering
+         happens inside the build layout. -->
+    <xmp id="strapcontent" style="display:none;"></xmp>
   </div>
 
   <script>
@@ -52,16 +53,12 @@
     s.src = '../strapdown.js';
     s.onload = function(){
       try{
-        // Configure marked for GFM/tables and disable automatic header IDs
-        if(typeof marked !== 'undefined' && typeof marked.setOptions === 'function'){
-          marked.setOptions({ gfm: true, headerIds: false });
-        }
-        // Render markdown into the page (use marked.parse when available)
-        const html = (typeof marked !== 'undefined') ? (typeof marked.parse === 'function' ? marked.parse(md) : marked(md)) : x.innerText;
+        // strapdown.js has already parsed the markdown from the <xmp> and
+        // replaced it with a generated div#content. Now build the TOC and
+        // apply table styling. Use the rendered DOM rather than re-parsing.
         const container = document.getElementById('content');
-        container.innerHTML = html;
+        if(!container) return;
 
-        // Build hierarchical TOC by scanning rendered headings in DOM.
         const tocRoot = document.querySelector('#toc ul');
         tocRoot.innerHTML = '';
         function slugify(s){ return s.toString().toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
@@ -71,13 +68,11 @@
         headings.forEach((h)=>{
           const level = parseInt(h.tagName.substring(1),10);
           const text = h.textContent.trim();
-          // create unique id
           let base = slugify(text) || 'section';
           let uid = base; let c=1; while(document.getElementById(uid)){ uid = base + '-' + (c++); }
           h.id = uid;
 
           if(level === 1){
-            // start a new file/group
             currentGroup = document.createElement('li');
             const strong = document.createElement('strong');
             strong.textContent = text;
@@ -85,10 +80,9 @@
             const sub = document.createElement('ul');
             currentGroup.appendChild(sub);
             tocRoot.appendChild(currentGroup);
-            return; // H1 itself used as group label
+            return;
           }
 
-          // ensure there's a group; if none, create a default group
           if(!currentGroup){
             currentGroup = document.createElement('li');
             const strong = document.createElement('strong');
@@ -105,7 +99,6 @@
           a.href = '#'+uid;
           a.textContent = text;
           li.appendChild(a);
-          // append to group's sublist
           currentGroup.querySelector('ul').appendChild(li);
         });
 
