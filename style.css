@@ -19,6 +19,7 @@ a:hover{opacity:.9}
 header{
   background:var(--brand); color:var(--bg); text-align:center; padding:56px 16px;
 }
+header a{color:var(--bg)}
 nav{margin-top:8px}
 nav a{margin:0 12px; font-weight:600}
 .build-layout{max-width:1100px; margin:40px auto 64px; padding:0 20px; display:grid; grid-template-columns:240px 1fr; gap:28px; align-items:start}
