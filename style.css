@@ -77,11 +77,8 @@ footer{
 #toc a:hover{background:var(--card)}
 #content{padding:6px 12px}
 
-/* Align header children with the main content container */
-header > h1, header > nav{max-width:1100px; margin:0 auto; padding:0 20px; box-sizing:border-box}
-
 /* Ensure embedded pages and iframes inside the build page scale to container width */
-#content iframe, .build-layout iframe, .embedded iframe{width:100% !important; max-width:100% !important; height:auto !important; display:block}
+#content iframe, .build-layout iframe, .embedded iframe{width:100% !important; max-width:100% !important; display:block}
 
 /* Make content wrap to avoid horizontal overflow from long words or code */
 #content{overflow-wrap:anywhere}
