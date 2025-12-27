@@ -21,49 +21,41 @@
 
 <p><img src="pinout.png" alt="Pinout diagram" style="max-width:100%;height:auto;border:1px solid #ddd;padding:6px;background:#fff"></p>
 
-<h3>Interactive Pin Spreadsheet</h3>
+<h3>Pin Assignments</h3>
 <div class="gsheet-embed" style="max-width:900px;margin:1rem auto;">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-    <strong>Pin assignments (interactive)</strong>
-    <a href="https://docs.google.com/spreadsheets/d/1OYkovWQZrmP2B3pAqBLEdzQZrvfZdYuTUI-WpdpVrhU/edit" target="_blank" rel="noopener">Open in Google Sheets</a>
-  </div>
-  <div style="width:100%;border:1px solid #e6e6e6;box-shadow:0 1px 2px rgba(0,0,0,0.04);background:#fff;padding:6px;">
-    <iframe src="https://docs.google.com/spreadsheets/d/1OYkovWQZrmP2B3pAqBLEdzQZrvfZdYuTUI-WpdpVrhU/htmlembed?gid=0&single=true" style="width:100%;height:520px;border:0"></iframe>
-  </div>
+   <iframe src="https://docs.google.com/spreadsheets/d/1OYkovWQZrmP2B3pAqBLEdzQZrvfZdYuTUI-WpdpVrhU/gviz/tq?tqx=out:html&tq&gid=491840581" style="height:800px;width:1200px;border:none;" title="pin assignments"></iframe> 
 </div>
+
 
 <h3>Alternate sheet</h3>
 <div class="gsheet-embed" style="max-width:900px;margin:1rem auto 2rem;">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-    <strong>Alternate</strong>
-    <a href="https://docs.google.com/spreadsheets/d/1OYkovWQZrmP2B3pAqBLEdzQZrvfZdYuTUI-WpdpVrhU/edit#gid=1" target="_blank" rel="noopener">Open in Google Sheets</a>
-  </div>
-  <div style="width:100%;border:1px solid #e6e6e6;box-shadow:0 1px 2px rgba(0,0,0,0.04);background:#fff;padding:6px;">
-    <iframe src="https://docs.google.com/spreadsheets/d/1OYkovWQZrmP2B3pAqBLEdzQZrvfZdYuTUI-WpdpVrhU/htmlembed?gid=1&single=true" style="width:100%;height:520px;border:0"></iframe>
-  </div>
+  <iframe src="https://docs.google.com/spreadsheets/d/1R2XI9dRtx-H2ULdSFT3UggdY3r0zkE26Pzkneg_ZgyA/gviz/tq?tqx=out:html&tq&gid=491840581" style="height:800px;width:1200px;border:none;" title="pin assignments"></iframe> 
 </div>
 <h3 id="option-b-shared-direction-sequential-pump-operation">Option B — Shared Direction (sequential pump operation)</h3>
+
 <p>This variant ties all L9110 “direction” inputs together so every pump reverses together, while you only enable one pump at a time. This reduces GPIO count but has electrical caveats; read the notes below carefully.</p>
+
 <h2 id="wiring-notes">Wiring Notes</h2>
 <ul>
-<li>L9110 drivers: Each DC motor uses two inputs; one pin can be PWM for speed. Typical drive patterns: Forward = IN1=PWM, IN2=LOW; Reverse = IN1=LOW, IN2=PWM; Brake = IN1=HIGH, IN2=HIGH. Power the motors from a separate supply sized for the pumps; connect grounds to the XIAO GND.</li>
-<li>I2C pins (<code>D4/SDA</code>, <code>D5/SCL</code>): This plan uses these as motor control. If you later add I2C devices, remap M3 pins to free GPIOs instead (e.g., <code>D10/A10</code> and a bottom pad) and return <code>D4/D5</code> to I2C.</li>
-<li>Salinity sensor: Drive an alternating excitation on <code>D11</code>/<code>D12</code> to reduce electrode polarization, then sample on <code>A10</code>. Add a resistor network per your probe design to keep the ADC within 0–3.3 V.</li>
-<li>Depth sensor (UART): Connect sensor TX→<code>RX/D7</code> and sensor RX←<code>TX/D6</code>. Provide the sensor with 3.3 V TTL UART levels. Many depth modules require 5 V power but still use 3.3 V logic—check your module’s datasheet.</li>
+  <li>L9110 drivers: Each DC motor uses two inputs; one pin can be PWM for speed. Typical drive patterns: Forward = IN1=PWM, IN2=LOW; Reverse = IN1=LOW, IN2=PWM; Brake = IN1=HIGH, IN2=HIGH. Power the motors from a separate supply sized for the pumps; connect grounds to the XIAO GND.</li>
+  <li>I2C pins (<code>D4/SDA</code>, <code>D5/SCL</code>): This plan uses these as motor control. If you later add I2C devices, remap M3 pins to free GPIOs instead (e.g., <code>D10/A10</code> and a bottom pad) and return <code>D4/D5</code> to I2C.</li>
+  <li>Salinity sensor: Drive an alternating excitation on <code>D11</code>/<code>D12</code> to reduce electrode polarization, then sample on <code>A10</code>. Add a resistor network per your probe design to keep the ADC within 0–3.3 V.</li>
+  <li>Depth sensor (UART): Connect sensor TX→<code>RX/D7</code> and sensor RX←<code>TX/D6</code>. Provide the sensor with 3.3 V TTL UART levels. Many depth modules require 5 V power but still use 3.3 V logic—check your module’s datasheet.</li>
 </ul>
+
 <h3 id="notes-for-option-b-shared-direction">Notes for Option B (Shared Direction)</h3>
 <ul>
-<li>Electrical behavior: The L9110 does not provide a dedicated enable per channel. If you physically tie all “direction” inputs together (<code>DIR_ALL</code>) and feed each motor a single per-channel PWM line, reverse speed control becomes limited because L9110 expects the PWM to be applied on the input corresponding to the selected direction. In the simplest wiring, reverse acts as on/off. If you require PWM in reverse, add a small gating stage (e.g., a 74HC4053/74HC4066 or two NPN/NMOS gates per channel) to route the per-motor PWM to the appropriate L9110 input based on <code>DIR_ALL</code>.</li>
-<li>One-at-a-time rule: With <code>DIR_ALL</code>, ensure only one motor’s PWM is non‑zero at any time, otherwise more than one pump will run together.</li>
-<li>Alternative drivers: TB6612FNG or DRV8833 provide clearer PHASE/ENABLE control and per‑channel standby/enable, making shared‑direction + per‑motor enable straightforward in hardware.</li>
+  <li>Electrical behavior: The L9110 does not provide a dedicated enable per channel. If you physically tie all “direction” inputs together (<code>DIR_ALL</code>) and feed each motor a single per-channel PWM line, reverse speed control becomes limited because L9110 expects the PWM to be applied on the input corresponding to the selected direction. In the simplest wiring, reverse acts as on/off. If you require PWM in reverse, add a small gating stage (e.g., a 74HC4053/74HC4066 or two NPN/NMOS gates per channel) to route the per-motor PWM to the appropriate L9110 input based on <code>DIR_ALL</code>.</li>
+  <li>One-at-a-time rule: With <code>DIR_ALL</code>, ensure only one motor’s PWM is non‑zero at any time, otherwise more than one pump will run together.</li>
+  <li>Alternative drivers: TB6612FNG or DRV8833 provide clearer PHASE/ENABLE control and per‑channel standby/enable, making shared‑direction + per‑motor enable straightforward in hardware.</li>
 </ul>
+
 <h2 id="power-guidance">Power Guidance</h2>
 <ul>
-<li>Motors: Use an external supply appropriate for the pumps. Route this to the <code>VCC</code>/<code>VM</code> of both L9110 boards; do not draw motor power from the XIAO. Place flyback suppression if your pump is inductive (most DC pumps are).</li>
-<li>MCU and sensors: Use the XIAO <code>3V3</code> for logic and low-power sensors; verify current budget. Always share ground across all modules.</li>
+  <li>Motors: Use an external supply appropriate for the pumps. Route this to the <code>VCC</code>/<code>VM</code> of both L9110 boards; do not draw motor power from the XIAO. Place flyback suppression if your pump is inductive (most DC pumps are).</li>
+  <li>MCU and sensors: Use the XIAO <code>3V3</code> for logic and low-power sensors; verify current budget. Always share ground across all modules.</li>
 </ul>
-<h2 id="quick-reference-by-pin">Quick Reference (by pin)</h2>
-<p>The quick reference is available in the embedded spreadsheet above.</p>
+
 </article>
 </body>
 </html>
