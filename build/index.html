@@ -27,104 +27,87 @@
       <h3>Contents</h3>
       <ul></ul>
     </aside>
-            <!-- strapdown expects an <xmp> element containing markdown; it will replace
-              this node with a generated div#content. Place it here so rendering
-              happens inside the build layout. -->
-            <xmp id="strapcontent" style="display:none;"></xmp>
+
+    <div id="content"></div>
   </div>
 
   <script>
   (async function(){
-    const files = ['BOM.md','pin_table.md'];
-    let md = '';
+    // Fetch the already-rendered HTML pages and inject their <article>
+    // content into this page. The TOC builder below will scan headings
+    // inside #content and populate the table of contents.
+    const files = ['BOM.html','pin_table.html'];
+    const container = document.getElementById('content');
     for(const f of files){
       try{
         const r = await fetch(f);
-        if(r.ok){ md += (md ? '\n\n---\n\n' : '') + await r.text(); }
-        else { md += (md ? '\n\n---\n\n' : '') + `<!-- Failed to load ${f}: ${r.status} -->`; }
-      }catch(e){ md += (md ? '\n\n---\n\n' : '') + `<!-- Error loading ${f}: ${e} -->`; }
-    }
-    // Load the local Strapdown parser you provided and let it render the
-    // markdown placed inside the <xmp id="strapcontent"> element. Then
-    // detect when Strapdown has produced the div#content and build the TOC.
-    const x = document.getElementById('strapcontent');
-    x.innerText = md;
-
-    const s = document.createElement('script');
-    s.src = '../strapdown.js';
-    s.onload = function(){
-      try{
-        // Post-render logic: run immediately if Strapdown already produced
-        // div#content, otherwise observe mutations until it appears.
-        const doPostRender = () => {
-          const container = document.getElementById('content');
-          if(!container) return;
-          // Build hierarchical TOC by scanning rendered headings in DOM.
-          const tocRoot = document.querySelector('#toc ul');
-          tocRoot.innerHTML = '';
-          function slugify(s){ return s.toString().toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
-
-          const headings = Array.from(container.querySelectorAll('h1,h2,h3'));
-          let currentGroup = null;
-          headings.forEach((h)=>{
-            const level = parseInt(h.tagName.substring(1),10);
-            const text = h.textContent.trim();
-            let base = slugify(text) || 'section';
-            let uid = base; let c=1; while(document.getElementById(uid)){ uid = base + '-' + (c++); }
-            h.id = uid;
-
-            if(level === 1){
-              currentGroup = document.createElement('li');
-              const strong = document.createElement('strong');
-              strong.textContent = text;
-              currentGroup.appendChild(strong);
-              const sub = document.createElement('ul');
-              currentGroup.appendChild(sub);
-              tocRoot.appendChild(currentGroup);
-              return;
-            }
-
-            if(!currentGroup){
-              currentGroup = document.createElement('li');
-              const strong = document.createElement('strong');
-              strong.textContent = 'Contents';
-              currentGroup.appendChild(strong);
-              const sub = document.createElement('ul');
-              currentGroup.appendChild(sub);
-              tocRoot.appendChild(currentGroup);
-            }
-
-            const li = document.createElement('li');
-            li.style.marginLeft = (Math.max(0, level-2) * 10) + 'px';
-            const a = document.createElement('a');
-            a.href = '#'+uid;
-            a.textContent = text;
-            li.appendChild(a);
-            currentGroup.querySelector('ul').appendChild(li);
-          });
-
-          // style tables
-          const tables = container.getElementsByTagName('table');
-          for(let i=0;i<tables.length;i++){
-            tables[i].style.width='100%'; tables[i].style.borderCollapse='collapse'; tables[i].style.margin='12px 0';
-            if(tables[i].querySelectorAll) Array.from(tables[i].querySelectorAll('th,td')).forEach(td=>{td.style.border='1px solid #cfd8c3'; td.style.padding='8px';});
-          }
-        };
-
-        if(document.getElementById('content')){
-          doPostRender();
-        }else{
-          const observer = new MutationObserver((mutations, obs) => {
-            if(document.getElementById('content')){
-              obs.disconnect();
-              doPostRender();
-            }
-          });
-          observer.observe(document.body, { childList: true, subtree: true });
+        if(!r.ok){
+          container.insertAdjacentHTML('beforeend', `<p><!-- Failed to load ${f}: ${r.status} --></p>`);
+          continue;
         }
-      }catch(e){ console.error('render error', e); }
-    };
-    document.body.appendChild(s);
+        const text = await r.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(text, 'text/html');
+        const article = doc.querySelector('article') || doc.body;
+        const section = document.createElement('section');
+        section.className = 'embedded';
+        section.innerHTML = article.innerHTML;
+        container.appendChild(section);
+      }catch(e){
+        container.insertAdjacentHTML('beforeend', `<p><!-- Error loading ${f}: ${e} --></p>`);
+      }
+    }
+
+    // Build hierarchical TOC by scanning rendered headings in DOM.
+    const tocRoot = document.querySelector('#toc ul');
+    tocRoot.innerHTML = '';
+    function slugify(s){ return s.toString().toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+
+    const headings = Array.from(container.querySelectorAll('h1,h2,h3'));
+    let currentGroup = null;
+    headings.forEach((h)=>{
+      const level = parseInt(h.tagName.substring(1),10);
+      const text = h.textContent.trim();
+      let base = slugify(text) || 'section';
+      let uid = base; let c=1; while(document.getElementById(uid)){ uid = base + '-' + (c++); }
+      h.id = uid;
+
+      if(level === 1){
+        currentGroup = document.createElement('li');
+        const strong = document.createElement('strong');
+        strong.textContent = text;
+        currentGroup.appendChild(strong);
+        const sub = document.createElement('ul');
+        currentGroup.appendChild(sub);
+        tocRoot.appendChild(currentGroup);
+        return;
+      }
+
+      if(!currentGroup){
+        currentGroup = document.createElement('li');
+        const strong = document.createElement('strong');
+        strong.textContent = 'Contents';
+        currentGroup.appendChild(strong);
+        const sub = document.createElement('ul');
+        currentGroup.appendChild(sub);
+        tocRoot.appendChild(currentGroup);
+      }
+
+      const li = document.createElement('li');
+      li.style.marginLeft = (Math.max(0, level-2) * 10) + 'px';
+      const a = document.createElement('a');
+      a.href = '#'+uid;
+      a.textContent = text;
+      li.appendChild(a);
+      currentGroup.querySelector('ul').appendChild(li);
+    });
+
+    // style tables
+    const tables = container.getElementsByTagName('table');
+    for(let i=0;i<tables.length;i++){
+      tables[i].style.width='100%'; tables[i].style.borderCollapse='collapse'; tables[i].style.margin='12px 0';
+      if(tables[i].querySelectorAll) Array.from(tables[i].querySelectorAll('th,td')).forEach(td=>{td.style.border='1px solid #cfd8c3'; td.style.padding='8px';});
+    }
   })();
   </script>
 
