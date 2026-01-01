@@ -5,6 +5,8 @@ idf_component_register(
          "receiver/display.c"
          "receiver/gps.c"
          "sensor/sensor.c"
+         "sensor/camera.c"
+         "sensor/logger.c"
     INCLUDE_DIRS "."
                  "receiver"
                  "sensor"
