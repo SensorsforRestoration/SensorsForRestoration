@@ -77,6 +77,12 @@ footer{
 #toc a:hover{background:var(--card)}
 #content{padding:6px 12px}
 
+/* Ensure embedded pages and iframes inside the build page scale to container width */
+#content iframe, .build-layout iframe, .embedded iframe{width:100% !important; max-width:100% !important; display:block}
+
+/* Make content wrap to avoid horizontal overflow from long words or code */
+#content{overflow-wrap:anywhere}
+
 @media (max-width:900px){
   .build-layout{grid-template-columns:1fr; padding:0 12px}
   #toc{order:-1;margin-bottom:12px}
