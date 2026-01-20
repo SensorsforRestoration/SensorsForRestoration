@@ -25,42 +25,92 @@ static esp_now_peer_info_t broadcastPeer =
     {
         .channel = 0,
         .encrypt = false,
-        .peer_addr = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF} // need to find the mac address of the other arduino
-};
+        .peer_addr = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}};
 
-int num = 0;
+esp_err_t must_peer(const uint8_t *address)
+{
+    if (esp_now_is_peer_exist(address))
+    {
+        return ESP_OK;
+    }
+
+    esp_now_peer_info_t peerInfo = {
+        .channel = 0,
+        .encrypt = false,
+    };
+    memcpy(peerInfo.peer_addr, address, ESP_NOW_ETH_ALEN);
+    return esp_now_add_peer(&peerInfo);
+}
 
 static void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *d, int len)
 {
-    if (len != sizeof(packet_t))
+    switch (len)
     {
-        ESP_LOGI(TAG, "Unexpected data size: %d", len);
-        return;
-    }
+    case sizeof(data_packet_t):
+        data_packet_t packet;
+        memcpy(&packet, d, sizeof(packet));
 
-    packet_t received;
-    memcpy(&received, d, sizeof(received));
-    // ESP_LOGI(TAG,
-    //          "From " MACSTR " | Packet Num: %lu | Time: %llu | Depth[2]=%.2f | Salinity[0]=%.2f | Temp[1]=%.2f",
-    //          MAC2STR(recv_info->src_addr),
-    //          received.packet_num,
-    //          received.timestamp,
-    //          received.payload.depth_mm[2],
-    //          received.payload.salinity[0],
-    //          received.payload.temperature[1]);
+        ESP_LOGI(TAG,
+                 "From " MACSTR " | Packet Num: %lu | Time: %llu | Depth[2]=%.2f | Salinity[0]=%.2f | Temp[1]=%.2f",
+                 MAC2STR(recv_info->src_addr),
+                 packet.packet_num,
+                 packet.timestamp,
+                 packet.data.depth[2],
+                 packet.data.salinity[0],
+                 packet.data.temperature[1]);
 
-    bool received_all = false;
-    ESP_ERROR_CHECK(store_packet(&received, &received_all));
+        bool received_all = false;
+        ESP_ERROR_CHECK(store_packet(recv_info->src_addr, &packet, &received_all));
+        if (received_all)
+        {
+            ESP_LOGI(TAG, "All packets for sequence %u received", packet.sequence_id);
+        }
 
-    char line[128];
-    esp_err_t err = gps_read_line(line, sizeof(line));
-    if (err == ESP_OK)
-    {
-        ESP_LOGI(TAG, "LINE: %s", line);
-    }
-    else
-    {
-        ESP_LOGI(TAG, "GPS ERROR: %s", err);
+        break;
+
+    case sizeof(broadcast_packet_t):
+        broadcast_packet_t broadcast;
+        memcpy(&broadcast, d, sizeof(broadcast));
+
+        if (broadcast.broadcast_type == BROADCAST_TYPE_NEW_SENSOR)
+        {
+            ESP_LOGI(TAG, "New sensor detected");
+
+            esp_err_t err = store_sensor(recv_info->src_addr);
+            if (err != ESP_OK)
+            {
+                ESP_LOGE(TAG, "Failed to store sensor: %s", esp_err_to_name(err));
+            }
+
+            time_t now;
+            time(&now);
+            sensor_start_packet_t start_pkt = {.timestamp = (uint64_t)time(NULL)};
+
+            err = must_peer(recv_info->src_addr);
+            if (err != ESP_OK)
+            {
+                ESP_LOGE(TAG, "Failed to add peer: %s", esp_err_to_name(err));
+                return;
+            }
+
+            err = esp_now_send(recv_info->src_addr, (uint8_t *)&start_pkt, sizeof(start_pkt));
+            if (err != ESP_OK)
+            {
+                ESP_LOGE(TAG, "Failed to send start packet: %s", esp_err_to_name(err));
+                return;
+            }
+
+            new_sensor_message(recv_info->src_addr);
+            // TODO: maybe we should have some confirmation signal?
+        }
+        else
+        {
+            ESP_LOGE(TAG, "Bad broadcast type: %d", broadcast.broadcast_type);
+        }
+
+        break;
+    default:
+        ESP_LOGE(TAG, "Unexpected data size: %d", len);
     }
 }
 
@@ -94,40 +144,17 @@ static void init_sntp(void)
 
 static void upload_request_task(void *pv)
 {
-    while (1) {
+    while (1)
+    {
         upload_request_t req = {.magic = UPLOAD_MAGIC};
-        esp_now_send(broadcastPeer.peer_addr, (uint8_t*)&req, sizeof(req));
+        esp_now_send(broadcastPeer.peer_addr, (uint8_t *)&req, sizeof(req));
         vTaskDelay(pdMS_TO_TICKS(2000)); // every 2s while boat is nearby
     }
 }
 
-
 static void send_cb(const esp_now_send_info_t *tx_info, esp_now_send_status_t status)
 {
-    ESP_LOGI(TAG, "Time sync send status: %s", status == ESP_NOW_SEND_SUCCESS ? "OK" : "FAIL");
-}
-
-void time_sync_task(void *pvParam)
-{
-    while (1)
-    {
-        time_t now;
-        time(&now);
-
-        time_sync_packet_t pkt = {.timestamp = (uint64_t)now};
-        esp_err_t result = esp_now_send(broadcastPeer.peer_addr, (uint8_t *)&pkt, sizeof(pkt));
-
-        if (result == ESP_OK)
-        {
-            ESP_LOGI(TAG, "Sent time sync: %llu", (unsigned long long)pkt.timestamp);
-        }
-        else
-        {
-            ESP_LOGE(TAG, "Failed to send time sync: %s", esp_err_to_name(result));
-        }
-
-        vTaskDelay(pdMS_TO_TICKS(5000)); // every 5 seconds
-    }
+    ESP_LOGI(TAG, "Message send status: %s", status == ESP_NOW_SEND_SUCCESS ? "OK" : "FAIL");
 }
 
 void receiver(void)
@@ -152,46 +179,13 @@ void receiver(void)
 
     xTaskCreate(upload_request_task, "upload_request_task", 2048, NULL, 5, NULL);
 
-
     ESP_ERROR_CHECK(storage_init());
 
     display_init();
 
     ESP_ERROR_CHECK(gps_init());
 
-    // init_sntp();
+    init_sntp();
 
     ESP_LOGI(TAG, "ESP-NOW receiver ready");
-
-    // xTaskCreate(time_sync_task, "time_sync_task", 4096, NULL, 5, NULL);
-
-    static packet_t packet_1 = {
-        .sequence_id = 12,
-        .packet_num = 1,
-        .total = 2,
-    };
-
-    static packet_t packet_2 = {
-        .sequence_id = 12,
-        .packet_num = 2,
-        .total = 2,
-    };
-
-    char line[128];
-    esp_err_t err = gps_read_line(line, sizeof(line));
-    if (err == ESP_OK)
-    {
-        ESP_LOGI(TAG, "LINE: %s", line);
-    }
-    else
-    {
-        ESP_LOGI(TAG, "GPS ERROR: %s", err);
-    }
-
-    /*bool received_all = false;
-
-    ESP_ERROR_CHECK(store_packet(&packet_1, &received_all));
-    ESP_LOGI(TAG, "received all: %s", received_all ? "true" : "false");
-    ESP_ERROR_CHECK(store_packet(&packet_2, &received_all));
-    ESP_LOGI(TAG, "received all: %s", received_all ? "true" : "false");*/
 }

@@ -11,7 +11,7 @@ enum Device
     RECEIVER,
 };
 
-const static int MODE = SENSOR;
+const static int MODE = RECEIVER;
 
 void app_main(void)
 {

@@ -15,17 +15,15 @@
 #include "camera.h"
 #include "logger.h"
 
-
-
-#define TRIG_PIN 5 //need to check these pins
-#define ECHO_PIN 18 //need to check these pins
+#define TRIG_PIN 5  // need to check these pins
+#define ECHO_PIN 18 // need to check these pins
 
 static const char *TAG = "SENSOR";
 
 // Persist across deep sleep
 RTC_SLOW_ATTR uint16_t s_sequence_id = 1;
-RTC_SLOW_ATTR uint32_t s_minutes = 0;  // increments each wake
-RTC_SLOW_ATTR uint16_t s_packet_num  = 1;
+RTC_SLOW_ATTR uint32_t s_minutes = 0; // increments each wake
+RTC_SLOW_ATTR uint16_t s_packet_num = 1;
 
 esp_err_t camera_init(void);
 esp_err_t camera_capture_color(uint8_t *r, uint8_t *g, uint8_t *b);
@@ -33,7 +31,7 @@ esp_err_t camera_capture_color(uint8_t *r, uint8_t *g, uint8_t *b);
 static volatile bool s_upload_requested = false;
 
 const int wakeup_time_sec = 60;
-uint8_t receiver_mac[] = {0x34, 0x5F, 0x45, 0x37, 0x8C, 0xA4}; //need to fill this in correctly for each sensor
+uint8_t receiver_mac[] = {0x34, 0x5F, 0x45, 0x37, 0x8C, 0xA4}; // need to fill this in correctly for each sensor
 
 static void setup_gpio(void)
 {
@@ -49,7 +47,8 @@ static void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *d, int 
 {
     (void)recv_info;
 
-    if (len == sizeof(time_sync_packet_t)) {
+    if (len == sizeof(time_sync_packet_t))
+    {
         time_sync_packet_t pkt;
         memcpy(&pkt, d, sizeof(pkt));
         struct timeval tv = {.tv_sec = pkt.timestamp, .tv_usec = 0};
@@ -58,10 +57,12 @@ static void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *d, int 
         return;
     }
 
-    if (len == sizeof(upload_request_t)) {
+    if (len == sizeof(upload_request_t))
+    {
         upload_request_t req;
         memcpy(&req, d, sizeof(req));
-        if (req.magic == UPLOAD_MAGIC) {
+        if (req.magic == UPLOAD_MAGIC)
+        {
             ESP_LOGI(TAG, "Upload requested by boat!");
             s_upload_requested = true;
         }
@@ -72,10 +73,13 @@ static void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *d, int 
 static void init_esp_now(void)
 {
     esp_err_t err = nvs_flash_init();
-    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
+    {
         ESP_ERROR_CHECK(nvs_flash_erase());
         ESP_ERROR_CHECK(nvs_flash_init());
-    } else {
+    }
+    else
+    {
         ESP_ERROR_CHECK(err);
     }
 
@@ -96,24 +100,26 @@ static void init_esp_now(void)
     peer.encrypt = false;
 
     err = esp_now_add_peer(&peer);
-    if (err != ESP_OK && err != ESP_ERR_ESPNOW_EXIST) ESP_ERROR_CHECK(err);
+    if (err != ESP_OK && err != ESP_ERR_ESPNOW_EXIST)
+        ESP_ERROR_CHECK(err);
 }
 
 static void send_one_record_as_packet(const log_record_t *rec, uint16_t idx, uint16_t total)
 {
     packet_t pkt = {0};
     pkt.sequence_id = s_sequence_id;
-    pkt.packet_num  = idx;
-    pkt.total       = total;
-    pkt.timestamp   = rec->unix_s;
-    pkt.sensor_id   = 1;
+    pkt.packet_num = idx;
+    pkt.total = total;
+    pkt.timestamp = rec->unix_s;
+    pkt.sensor_id = 1;
     pkt.payload.depth_mm = rec->depth_mm;
     pkt.payload.r = rec->r;
     pkt.payload.g = rec->g;
     pkt.payload.b = rec->b;
 
-    esp_err_t r = esp_now_send(receiver_mac, (uint8_t*)&pkt, sizeof(pkt));
-    if (r != ESP_OK) {
+    esp_err_t r = esp_now_send(receiver_mac, (uint8_t *)&pkt, sizeof(pkt));
+    if (r != ESP_OK)
+    {
         ESP_LOGW(TAG, "Send failed idx=%u: %s", idx, esp_err_to_name(r));
     }
 
@@ -127,7 +133,7 @@ static bool time_is_valid(void)
     return (now > 1700000000); // ~late 2023; simple sanity
 }
 
-//is this the old code that needs to be replaced??
+// is this the old code that needs to be replaced??
 static int16_t readDepthMm(void)
 {
     gpio_set_level(TRIG_PIN, 0);
@@ -137,13 +143,17 @@ static int16_t readDepthMm(void)
     gpio_set_level(TRIG_PIN, 0);
 
     const int64_t t0 = esp_timer_get_time();
-    while (gpio_get_level(ECHO_PIN) == 0) {
-        if (esp_timer_get_time() - t0 > 30000) return -1;
+    while (gpio_get_level(ECHO_PIN) == 0)
+    {
+        if (esp_timer_get_time() - t0 > 30000)
+            return -1;
     }
 
     const int64_t pulse_start = esp_timer_get_time();
-    while (gpio_get_level(ECHO_PIN) == 1) {
-        if (esp_timer_get_time() - pulse_start > 30000) return -2;
+    while (gpio_get_level(ECHO_PIN) == 1)
+    {
+        if (esp_timer_get_time() - pulse_start > 30000)
+            return -2;
     }
     const int64_t pulse_end = esp_timer_get_time();
     const int64_t dur_us = pulse_end - pulse_start;
@@ -164,12 +174,15 @@ void sensor(void)
     // Decide whether to do daily color (simple: once every 1440 minutes)
     // bool do_color_today = (s_minutes % 1440u) == 0; // roughly once/day
     bool do_color_today = true;
-    uint8_t r=0,g=0,b=0;
+    uint8_t r = 0, g = 0, b = 0;
     uint8_t flags = 0;
-    if (time_is_valid()) flags |= 0x01;
+    if (time_is_valid())
+        flags |= 0x01;
 
-    if (do_color_today) {
-        if (camera_init() == ESP_OK && camera_capture_color(&r,&g,&b) == ESP_OK) {
+    if (do_color_today)
+    {
+        if (camera_init() == ESP_OK && camera_capture_color(&r, &g, &b) == ESP_OK)
+        {
             flags |= 0x02; // color_valid
         }
     }
@@ -178,15 +191,17 @@ void sensor(void)
     log_record_t rec = {
         .unix_s = (uint32_t)(time_is_valid() ? time(NULL) : 0),
         .depth_mm = depth_mm,
-        .r = r, .g = g, .b = b,
-        .flags = flags
-    };
+        .r = r,
+        .g = g,
+        .b = b,
+        .flags = flags};
 
     ESP_ERROR_CHECK(logger_append(&rec));
     s_minutes++;
 
     // If boat asked, upload everything and then clear
-    if (s_upload_requested) {
+    if (s_upload_requested)
+    {
         uint32_t count = 0;
         logger_count(&count);
         ESP_LOGI(TAG, "Uploading %lu records...", (unsigned long)count);
