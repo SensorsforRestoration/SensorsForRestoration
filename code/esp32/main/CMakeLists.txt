@@ -13,5 +13,5 @@ idf_component_register(
     INCLUDE_DIRS "."
                  "receiver"
                  "sensor"
-    REQUIRES esp32-camera ssd1306 esp_wifi nvs_flash esp_timer fatfs
+#    REQUIRES esp32-camera ssd1306 esp_wifi nvs_flash esp_timer fatfs
 )

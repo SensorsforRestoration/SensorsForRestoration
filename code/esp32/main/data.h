@@ -7,6 +7,13 @@ typedef struct
     float depth[360];
     float temperature[1];
     float salinity[2];
+
+    // depth_mm is the depth in millimeters.
+    int16_t depth_mm;
+
+    int16_t r;
+    int16_t g;
+    int16_t b;
 } data_t;
 
 typedef struct

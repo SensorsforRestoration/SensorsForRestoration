@@ -47,7 +47,7 @@ static void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *d, int 
 {
     (void)recv_info;
 
-    if (len == sizeof(time_sync_packet_t))
+    /*if (len == sizeof(time_sync_packet_t))
     {
         time_sync_packet_t pkt;
         memcpy(&pkt, d, sizeof(pkt));
@@ -55,15 +55,15 @@ static void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *d, int 
         settimeofday(&tv, NULL);
         ESP_LOGI(TAG, "Time synced to %lu", (unsigned long)pkt.timestamp);
         return;
-    }
+    }*/
 
-    if (len == sizeof(upload_request_t))
+    if (len == sizeof(broadcast_type_t))
     {
-        upload_request_t req;
-        memcpy(&req, d, sizeof(req));
-        if (req.magic == UPLOAD_MAGIC)
+        broadcast_packet_t broadcast;
+        memcpy(&broadcast, d, sizeof(broadcast));
+        if (broadcast.broadcast_type == BROADCAST_TYPE_RECEIVER)
         {
-            ESP_LOGI(TAG, "Upload requested by boat!");
+            ESP_LOGI(TAG, "Boat nearby!");
             s_upload_requested = true;
         }
         return;
@@ -106,16 +106,15 @@ static void init_esp_now(void)
 
 static void send_one_record_as_packet(const log_record_t *rec, uint16_t idx, uint16_t total)
 {
-    packet_t pkt = {0};
+    data_packet_t pkt = {0};
     pkt.sequence_id = s_sequence_id;
     pkt.packet_num = idx;
     pkt.total = total;
     pkt.timestamp = rec->unix_s;
-    pkt.sensor_id = 1;
-    pkt.payload.depth_mm = rec->depth_mm;
-    pkt.payload.r = rec->r;
-    pkt.payload.g = rec->g;
-    pkt.payload.b = rec->b;
+    pkt.data.depth_mm = rec->depth_mm;
+    pkt.data.r = rec->r;
+    pkt.data.g = rec->g;
+    pkt.data.b = rec->b;
 
     esp_err_t r = esp_now_send(receiver_mac, (uint8_t *)&pkt, sizeof(pkt));
     if (r != ESP_OK)

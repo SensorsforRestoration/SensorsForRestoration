@@ -142,12 +142,12 @@ static void init_sntp(void)
     }
 }
 
-static void upload_request_task(void *pv)
+static void receiver_message_task(void *pv)
 {
     while (1)
     {
-        upload_request_t req = {.magic = UPLOAD_MAGIC};
-        esp_now_send(broadcastPeer.peer_addr, (uint8_t *)&req, sizeof(req));
+        broadcast_packet_t broadcast = {.broadcast_type = BROADCAST_TYPE_RECEIVER};
+        esp_now_send(broadcastPeer.peer_addr, (uint8_t *)&broadcast, sizeof(broadcast));
         vTaskDelay(pdMS_TO_TICKS(2000)); // every 2s while boat is nearby
     }
 }
@@ -177,7 +177,7 @@ void receiver(void)
     ESP_ERROR_CHECK(esp_now_register_send_cb(send_cb));
     ESP_ERROR_CHECK(esp_now_add_peer(&broadcastPeer));
 
-    xTaskCreate(upload_request_task, "upload_request_task", 2048, NULL, 5, NULL);
+    xTaskCreate(receiver_message_task, "receiver_message_task", 2048, NULL, 5, NULL);
 
     ESP_ERROR_CHECK(storage_init());
 
