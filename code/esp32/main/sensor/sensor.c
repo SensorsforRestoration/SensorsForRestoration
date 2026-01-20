@@ -47,15 +47,15 @@ static void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *d, int 
 {
     (void)recv_info;
 
-    /*if (len == sizeof(time_sync_packet_t))
+    if (len == sizeof(sensor_start_packet_t))
     {
-        time_sync_packet_t pkt;
+        sensor_start_packet_t pkt;
         memcpy(&pkt, d, sizeof(pkt));
         struct timeval tv = {.tv_sec = pkt.timestamp, .tv_usec = 0};
         settimeofday(&tv, NULL);
         ESP_LOGI(TAG, "Time synced to %lu", (unsigned long)pkt.timestamp);
         return;
-    }*/
+    }
 
     if (len == sizeof(broadcast_type_t))
     {
