@@ -1,0 +1,201 @@
+// XIAO ESP32S3 — 4-wire AC EC (direct GPIO drive, NO L9110)
+// Software-only fixes: (1) phase swap option, (2) B+-only option, (3) longer A+ settle.
+// Serial cmds: pre | cap20 | cap20! | cap34 | cap34! | solve | run | stop | diag
+
+#include <Arduino.h>
+
+// -------- Pins (your setup) --------
+const int PIN_DRV_A_IN = D4;   // GPIO5  -> 1k -> Rod1 (drive A)
+const int PIN_DRV_B_IN = D3;   // GPIO4  -> 1k -> Rod4 (drive B)
+const int PIN_SENSE_P  = D2;   // A2 / GPIO3 -> Rod2
+const int PIN_SENSE_N  = D8;   // A8 / GPIO7 -> Rod3
+const int PIN_THERM    = D1;   // A1 / GPIO2 (10k/3950 NTC divider)
+
+// -------- Options (SOFTWARE ONLY) --------
+bool  SWAP_PHASE   = true;   // true = swap A+/B+ drive order (fixes A+ collapse)
+bool  BPLUS_ONLY   = true;   // true = measure only B+ half (uses strong half)
+float TEMP_OFFSET_C= -3.0f;  // your measured offset
+
+// -------- Timing / sampling --------
+uint32_t SETTLE_US_A  = 15000;  // A+ extra settle (kept long even if BPLUS_ONLY)
+uint32_t SETTLE_US_B  = 8000;   // B+ settle
+uint32_t HALF_IDLE_US = 80000;  // rest between halves
+uint8_t  PHASE_READS  = 41;     // per half, median
+uint8_t  BURSTS       = 12;      // half-pairs per n()
+const uint16_t DELTA_MIN = 15;  // reject tiny |Δ|
+
+// -------- Print & stability gate --------
+const uint32_t TICK_MS = 100;
+uint32_t PRINT_MS = 5000;
+const int   STAB_N=60; float STAB_SLOPE=0.01f, STAB_MAD_MAX=0.03f, STAB_MAD_MIN=0.002f;
+
+// -------- Seawater conversion --------
+const float EC_ALPHA_PER_C   = 0.019f;
+const float MSCM_PER_PPT_25C = 56.2f/35.0f; // 1.605714
+
+// -------- Thermistor (3V3->10k->node->NTC->GND) --------
+const float THERM_R_SER=10000.0f, THERM_R0=10000.0f, THERM_BETA=3950.0f;
+
+// -------- Map targets & current map --------
+const float EC25_20ppt=32.114f, EC25_34ppt=54.594f;
+float A_map = -0.923077, B_map=189.600000f;
+
+// -------- Utils --------
+static void isortU16(uint16_t* a,int n){for(int i=1;i<n;i++){uint16_t k=a[i];int j=i-1;while(j>=0&&a[j]>k){a[j+1]=a[j];j--;}a[j+1]=k;}}
+static void isortF(float* a,int n){for(int i=1;i<n;i++){float k=a[i];int j=i-1;while(j>=0&&a[j]>k){a[j+1]=a[j];j--;}a[j+1]=k;}}
+static float medianF(const float* a,int n){float b[64]; n=min(n,64); for(int i=0;i<n;i++) b[i]=a[i]; isortF(b,n); return b[n/2];}
+static float MAD_over_med(const float* a,int n){float med=medianF(a,n), d[64]; n=min(n,64); for(int i=0;i<n;i++) d[i]=fabsf(a[i]-med); float mad=medianF(d,n); return (med>1e-6f)?(mad/med):0.0f;}
+
+// Thermistor
+static float readThermC(){
+  uint16_t a=analogRead(PIN_THERM); if(a==0||a>=4095) return NAN;
+  float v = (float)a / (4095.0f - a); // Vnode/(3.3-Vnode) ratio
+  float r_ntc = THERM_R_SER * v;
+  const float T0K = 273.15f+25.0f;
+  float invT = (1.0f/T0K) + (1.0f/THERM_BETA)*logf(r_ntc/THERM_R0);
+  return (1.0f/invT)-273.15f + TEMP_OFFSET_C;
+}
+
+// Drive
+static void setDrive(bool Ahi,bool Bhi){ digitalWrite(PIN_DRV_A_IN, Ahi?HIGH:LOW); digitalWrite(PIN_DRV_B_IN, Bhi?HIGH:LOW); }
+static void driveOff(){ setDrive(false,false); }
+
+// One half measurement -> median |Δ| (ADC counts)
+static uint16_t sampleHalf(bool Aplus){
+  bool useA = SWAP_PHASE ? !Aplus : Aplus;    // software swap
+  setDrive(useA, !useA);
+  delayMicroseconds(Aplus?SETTLE_US_A:SETTLE_US_B);
+  uint16_t diffs[64];
+  for(uint8_t i=0;i<PHASE_READS;i++){
+    uint16_t a2=analogRead(PIN_SENSE_P), a8=analogRead(PIN_SENSE_N);
+    diffs[i]=(a2>a8)?(a2-a8):(a8-a2);
+  }
+  isortU16(diffs,PHASE_READS);
+  delayMicroseconds(HALF_IDLE_US);
+  return diffs[PHASE_READS/2];
+}
+
+// n estimator
+static bool measure_n(float& n_out){
+  uint16_t vals[64]; int c=0;
+  for(uint8_t k=0;k<BURSTS;k++){
+    if(!BPLUS_ONLY){ uint16_t dA=sampleHalf(true);  if(dA>=DELTA_MIN) vals[c++]=dA; }
+    uint16_t dB=sampleHalf(false); if(dB>=DELTA_MIN) vals[c++]=dB;
+  }
+  if(c<4) return false;
+  isortU16(vals,c);
+  float med = vals[c/2];
+  float m = med/4095.0f; if(m<1e-6f) return false;
+  n_out = 1.0f/m;
+  return true;
+}
+
+// Stability ring
+const int STAB_CAP=STAB_N; float n_hist[STAB_CAP]; int n_cnt=0,n_idx=0; bool gateOK=false; uint32_t lastPrint=0;
+static void ring_push(float n){ n_hist[n_idx]=n; n_idx=(n_idx+1)%STAB_CAP; if(n_cnt<STAB_CAP) n_cnt++; }
+static bool gate_eval(float& slope,float& mad){
+  if(n_cnt<STAB_CAP){ slope=NAN; mad=NAN; return false; }
+  float first=n_hist[n_idx], last=n_hist[(n_idx+STAB_CAP-1)%STAB_CAP];
+  slope=(last-first)/((fabsf(first)>1e-6f)?first:1.0f);
+  mad=MAD_over_med(n_hist,n_cnt);
+  return (fabsf(slope)<=STAB_SLOPE)&&(mad<=STAB_MAD_MAX)&&(mad>=STAB_MAD_MIN);
+}
+
+// Capture buffers
+float cap20_buf[12]; int cap20_cnt=0;
+float cap34_buf[12]; int cap34_cnt=0;
+
+// Modes
+enum Mode{IDLE,PRE,RUN}; Mode mode=IDLE;
+
+// Loops
+static void do_PRE_tick(){
+  float n; if(measure_n(n)) ring_push(n);
+  float slope,mad; gateOK=gate_eval(slope,mad);
+  uint32_t now=millis();
+  if(now-lastPrint>=PRINT_MS){
+    float t=readThermC();
+    Serial.print(gateOK?"[OK] ":"[WARM] ");
+    Serial.print("n="); if(n_cnt) Serial.print(n_hist[(n_idx+STAB_CAP-1)%STAB_CAP],4); else Serial.print("NA");
+    Serial.print("  slope(5m)="); if(isnan(slope)) Serial.print("NA"); else { Serial.print(slope*100.0f,2); Serial.print("%"); }
+    Serial.print("  MAD/med=");   if(isnan(mad))   Serial.print("NA"); else { Serial.print(mad*100.0f,2); Serial.print("%"); }
+    if(!isnan(t)){ Serial.print("  T="); Serial.print(t,2); Serial.print(" C"); }
+    Serial.println(); lastPrint=now;
+  }
+}
+
+static void capture_buf(float* buf,int& cnt){
+  cnt=0; for(int i=0;i<9;i++){ float n; if(measure_n(n)) buf[cnt++]=n; delay(200); }
+  float nm=medianF(buf,cnt); float t=readThermC();
+  Serial.print("Captured n="); Serial.print(nm,6); if(!isnan(t)){ Serial.print("  T="); Serial.print(t,2); Serial.print(" C"); } Serial.println();
+}
+
+static void do_RUN_tick(){
+  float n; if(!measure_n(n)) return;
+  float t=readThermC();
+  float EC25 = A_map*n + B_map;
+  float EC_T = EC25*(1.0f + EC_ALPHA_PER_C*((isnan(t)?25.0f:t)-25.0f));
+  int ppt = (int)roundf(EC25/MSCM_PER_PPT_25C);
+  uint32_t now=millis();
+  if(now-lastPrint>=PRINT_MS){
+    Serial.print(gateOK?"[OK] ":"[WARM] ");
+    Serial.print("n="); Serial.print(n,4);
+    Serial.print("  EC25="); Serial.print(EC25,3); Serial.print(" mS/cm");
+    Serial.print("  EC_T="); Serial.print(EC_T,3); Serial.print(" mS/cm  ");
+    Serial.print(ppt); Serial.print(" ppt");
+    if(!isnan(t)){ Serial.print("  T="); Serial.print(t,2); Serial.print(" C"); }
+    Serial.println(); lastPrint=now;
+  }
+}
+
+// DIAG (5 lines)
+static void diag_once(){
+  auto medU=[&](bool Aplus,uint32_t settle,int pin){
+    bool useA = SWAP_PHASE ? !Aplus : Aplus;
+    setDrive(useA, !useA); delayMicroseconds(settle);
+    const uint8_t R=21; uint16_t v[R]; for(uint8_t i=0;i<R;i++) v[i]=analogRead(pin);
+    isortU16(v,R); delayMicroseconds(HALF_IDLE_US); return v[R/2];
+  };
+  uint16_t a2A=medU(true,SETTLE_US_A,PIN_SENSE_P), a8A=medU(true,SETTLE_US_A,PIN_SENSE_N);
+  uint16_t a2B=medU(false,SETTLE_US_B,PIN_SENSE_P),a8B=medU(false,SETTLE_US_B,PIN_SENSE_N);
+  int dA=abs((int)a2A-(int)a8A), dB=abs((int)a2B-(int)a8B);
+  Serial.printf("DIAG  A+: A2=%u A8=%u  |Δ|=%d   B+: A2=%u A8=%u  |Δ|=%d\n",a2A,a8A,dA,a2B,a8B,dB);
+}
+
+void setup(){
+  Serial.begin(115200);
+  pinMode(PIN_DRV_A_IN,OUTPUT); pinMode(PIN_DRV_B_IN,OUTPUT); driveOff();
+  pinMode(PIN_SENSE_P,INPUT);   pinMode(PIN_SENSE_N,INPUT);   pinMode(PIN_THERM,INPUT);
+
+  // Sense nodes: keep 0 dB (full-scale ≈1.1 V) for higher counts/resolution
+  analogSetPinAttenuation(PIN_SENSE_P, ADC_0db);
+  analogSetPinAttenuation(PIN_SENSE_N, ADC_0db);
+  analogSetPinAttenuation(PIN_THERM,   ADC_11db);
+
+  Serial.println("EC 4W AC — cmds: pre | cap20 | cap20! | cap34 | cap34! | solve | run | stop | diag");
+}
+
+void loop(){
+  static int state=0; // 0 idle, 1 pre, 2 run
+  if(state==1) do_PRE_tick(); else if(state==2) do_RUN_tick();
+
+  if(Serial.available()){
+    String cmd=Serial.readStringUntil('\n'); cmd.trim();
+    if(cmd=="pre"){ state=1; memset(n_hist,0,sizeof(n_hist)); n_cnt=0; n_idx=0; gateOK=false; lastPrint=0; Serial.println("PRE started."); }
+    else if(cmd=="cap20"||cmd=="cap20!"){ if(cmd=="cap20"&&!gateOK) Serial.println("Not stable; use cap20!"); else capture_buf(cap20_buf,cap20_cnt); }
+    else if(cmd=="cap34"||cmd=="cap34!"){ if(cmd=="cap34"&&!gateOK) Serial.println("Not stable; use cap34!"); else capture_buf(cap34_buf,cap34_cnt); }
+    else if(cmd=="solve"){
+      if(cap20_cnt==0||cap34_cnt==0) Serial.println("Need cap20/cap34 first.");
+      else { float n20=medianF(cap20_buf,cap20_cnt), n34=medianF(cap34_buf,cap34_cnt);
+             A_map=(EC25_34ppt-EC25_20ppt)/(n34-n20); B_map=EC25_20ppt - A_map*n20;
+             Serial.printf("A_map=%.6f\nB_map=%.6f\n",A_map,B_map); }
+    }
+    else if(cmd=="run"){ state=2; lastPrint=0; Serial.println("RUN streaming."); }
+    else if(cmd=="stop"){ state=0; driveOff(); Serial.println("Stopped."); }
+    else if(cmd=="diag"){ for(int i=0;i<5;i++){ diag_once(); delay(400); } }
+    else if(cmd=="bplus"){ BPLUS_ONLY=!BPLUS_ONLY; Serial.printf("BPLUS_ONLY=%s\n", BPLUS_ONLY?"true":"false"); }
+    else if(cmd=="swap"){ SWAP_PHASE=!SWAP_PHASE; Serial.printf("SWAP_PHASE=%s\n", SWAP_PHASE?"true":"false"); }
+    else Serial.println("Commands: pre | cap20 | cap20! | cap34 | cap34! | solve | run | stop | diag | bplus | swap");
+  }
+  delay(TICK_MS);
+}

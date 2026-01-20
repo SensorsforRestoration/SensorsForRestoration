@@ -1,0 +1,149 @@
+// XIAO ESP32S3 — MINIMAL 4-wire AC EC measurement
+// Goal: see if 20 ppt and 34 ppt produce different numbers. 
+
+// ---------------- Pins ----------------
+const int PIN_DRIVE_A = D4;   // GPIO5 → 1k → Rod1
+const int PIN_DRIVE_B = D3;   // GPIO4 → 1k → Rod4
+const int PIN_SENSE_P = D2;   // A2 / GPIO3 → Rod2
+const int PIN_SENSE_N = D8;   // A8 / GPIO7 → Rod3
+const int PIN_THERM   = D1;   // A1 / GPIO2 → thermistor divider
+
+// ---------------- Timing ----------------
+const uint32_t SETTLE_US = 5000;   // settle after polarity change
+const uint8_t  SAMPLES   = 32;     // ADC samples per half-cycle
+const uint32_t PAUSE_MS  = 2000;   // time between measurements
+
+// ---------------- Seawater constants ----------------
+const float EC_ALPHA_PER_C   = 0.019f;          // 1.9 % / °C
+const float MSCM_PER_PPT_25C = 56.2f / 35.0f;   // ≈1.6057
+
+// ---------------- Thermistor ----------------
+const float THERM_R_SER = 10000.0f;
+const float THERM_R0    = 10000.0f;
+const float THERM_BETA  = 3950.0f;
+const float TEMP_OFFSET_C = -3.0f;
+
+// ---------------- Calibration (fill after cap20 / cap34) ----------------
+float A_map = NAN;
+float B_map = NAN;
+
+// ---------------- Helpers ----------------
+float readThermC() {
+  uint16_t a = analogRead(PIN_THERM);
+  if (a == 0 || a >= 4095) return NAN;
+  float r = THERM_R_SER * (float)a / (4095.0f - a);
+  float invT = (1.0f / (273.15f + 25.0f)) +
+               (1.0f / THERM_BETA) * log(r / THERM_R0);
+  return (1.0f / invT) - 273.15f + TEMP_OFFSET_C;
+}
+
+uint16_t sampleDiff() {
+  uint16_t buf[SAMPLES];
+  for (uint8_t i = 0; i < SAMPLES; i++) {
+    uint16_t p = analogRead(PIN_SENSE_P);
+    uint16_t n = analogRead(PIN_SENSE_N);
+    buf[i] = (p > n) ? (p - n) : (n - p);
+  }
+  // median
+  for (uint8_t i = 1; i < SAMPLES; i++) {
+    uint16_t k = buf[i];
+    int j = i - 1;
+    while (j >= 0 && buf[j] > k) { buf[j + 1] = buf[j]; j--; }
+    buf[j + 1] = k;
+  }
+  return buf[SAMPLES / 2];
+}
+
+// One EC sample: symmetric AC
+bool measure_n(float &n_out) {
+  // A+
+  digitalWrite(PIN_DRIVE_A, HIGH);
+  digitalWrite(PIN_DRIVE_B, LOW);
+  delayMicroseconds(SETTLE_US);
+  uint16_t d1 = sampleDiff();
+
+  // B+
+  digitalWrite(PIN_DRIVE_A, LOW);
+  digitalWrite(PIN_DRIVE_B, HIGH);
+  delayMicroseconds(SETTLE_US);
+  uint16_t d2 = sampleDiff();
+
+  // off
+  digitalWrite(PIN_DRIVE_A, LOW);
+  digitalWrite(PIN_DRIVE_B, LOW);
+
+  uint16_t d = (d1 + d2) / 2;
+  if (d < 5) return false;
+
+  float m = (float)d / 4095.0f;
+  n_out = 1.0f / m;
+  return true;
+}
+
+// ---------------- Arduino ----------------
+void setup() {
+  Serial.begin(115200);
+
+  pinMode(PIN_DRIVE_A, OUTPUT);
+  pinMode(PIN_DRIVE_B, OUTPUT);
+  digitalWrite(PIN_DRIVE_A, LOW);
+  digitalWrite(PIN_DRIVE_B, LOW);
+
+  pinMode(PIN_SENSE_P, INPUT);
+  pinMode(PIN_SENSE_N, INPUT);
+  pinMode(PIN_THERM,   INPUT);
+
+  analogSetPinAttenuation(PIN_SENSE_P, ADC_11db);
+  analogSetPinAttenuation(PIN_SENSE_N, ADC_11db);
+  analogSetPinAttenuation(PIN_THERM,   ADC_11db);
+
+  Serial.println("MINIMAL 4-wire AC EC");
+  Serial.println("Commands: cap20 | cap34 | run");
+}
+
+void loop() {
+  if (Serial.available()) {
+    String cmd = Serial.readStringUntil('\n');
+    cmd.trim();
+
+    if (cmd == "cap20" || cmd == "cap34") {
+      float n;
+      if (measure_n(n)) {
+        float t = readThermC();
+        Serial.print(cmd);
+        Serial.print("  n=");
+        Serial.print(n, 6);
+        Serial.print("  T=");
+        Serial.print(t, 2);
+        Serial.println(" C");
+      } else {
+        Serial.println("MEASURE FAIL");
+      }
+    }
+
+    if (cmd == "run") {
+      Serial.println("RUN (requires A_map / B_map set)");
+    }
+  }
+
+  if (!isnan(A_map) && !isnan(B_map)) {
+    float n;
+    if (measure_n(n)) {
+      float t = readThermC();
+      float EC25 = A_map * n + B_map;
+      float EC_T = EC25 * (1.0f + EC_ALPHA_PER_C * (t - 25.0f));
+      float ppt = EC25 / MSCM_PER_PPT_25C;
+
+      Serial.print("n=");
+      Serial.print(n, 3);
+      Serial.print("  EC25=");
+      Serial.print(EC25, 2);
+      Serial.print(" mS/cm  ppt=");
+      Serial.print(ppt, 1);
+      Serial.print("  T=");
+      Serial.print(t, 2);
+      Serial.println(" C");
+    }
+    delay(PAUSE_MS);
+  }
+}

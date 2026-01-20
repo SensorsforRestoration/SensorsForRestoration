@@ -19,8 +19,140 @@
   </header>
   <main>
     <article class="card update">
-      <h3>Week 13 Team Updates</h3>
-      <p></p>
+      <h3>Week 13 Salinity Sensing Updates</h3>
+
+      <p>TLDR: I tried all sorts of different configurations and code/electronics strategies to get a reliable salinity reading (that maintained reliability over time). So far, I've not found anything that works, but there's one last attempt I'd like to try using <a href='./minimal.txt'>a simple approach to AC readings.</a> 
+       </p>
+
+      <ul>
+  <li><strong>Initial 2-wire DC build</strong>
+    <ul>
+      <li>Electrodes: four M8 stainless bolts in a 4&quot; PVC end cap; later tried 3/32&quot;–1/8&quot; 316 welding rod for slimmer geometry.</li>
+      <li>Wiring: one excitation pin and one ADC through a 1 kΩ series resistor; thermistor added on a 10 kΩ divider.</li>
+      <li>Code: ported Pierre Hertzog’s <a href='https://www.youtube.com/watch?v=-xKIczj9rVA'>“EC Hydroponics”</a> sketch to ESP32-S3; short pulse excitation with burst-median ADC; temperature compensation and ppm mapping.</li>
+      <li>Outcome: erratic readings that wandered with time; occasional “LOW RANGE / SHORT?” and “HIGH RANGE / OPEN?” states; strong bath history effects.</li>
+    </ul>
+  </li>
+
+  <li><strong>Early calibration attempts</strong>
+    <ul>
+      <li>Standards: 12 ppt, 20 ppt, and 34 ppt solutions at measured bath temperatures.</li>
+      <li>K constant hunts: large K variation depending on which standard was used; single-point K failed to generalize.</li>
+    </ul>
+  </li>
+
+  <li><strong>Two-point mapping experiments</strong>
+    <ul>
+      <li>Introduced capture commands: <code>cap20</code>, <code>cap34</code>, <code>solve</code> to compute linear map <code>EC = A_map + B_map * x</code>.</li>
+      <li>Multiple runs produced widely different <code>A_map/B_map</code> depending on drift and soak history; sometimes produced infinities when ranges collapsed.</li>
+      <li>Conclusion: 2-wire DC with raw stainless in static baths was dominated by interfacial polarization and drift; map not stable.</li>
+    </ul>
+  </li>
+
+  <li><strong>Mechanical and wiring refinements</strong>
+    <ul>
+      <li>Electrode lengths standardized; spacing tightened; plan to pot permanently in epoxy after test phase.</li>
+      <li>Adopted bottom-facing four-rod pattern; clarified that the cap interior is dry and ocean side is wet.</li>
+      <li>Improved leads: crimped copper lugs, strain relief, and discussion of optional guard bead of epoxy between rods.</li>
+    </ul>
+  </li>
+
+  <li><strong>Thermistor work</strong>
+    <ul>
+      <li>10 kΩ NTC in divider to 3.3 V; beta ≈ 3950; added offset constant based on reference thermometer.</li>
+      <li>Printed temperature continuously and used EC alpha ≈ 0.019 per °C for compensation.</li>
+    </ul>
+  </li>
+
+  <li><strong>Transition toward 4-electrode measurement</strong>
+    <ul>
+      <li>Goal: drive on outer rods, sense on inner rods to reduce lead and interface errors.</li>
+      <li>First pass kept DC and measured inner-rod differential indirectly; still drifted and often gave same scale in different baths.</li>
+    </ul>
+  </li>
+
+  <li><strong>H-bridge consideration then rollback</strong>
+    <ul>
+      <li>Proposed L9110 dual H-bridge for symmetric AC drive; raised complexity and time cost.</li>
+      <li>Decision: remove H-bridge for now; try MCU-only push-pull AC using two GPIOs and series limit resistors on the excitation rods.</li>
+    </ul>
+  </li>
+
+  <li><strong>AC 4-wire implementation</strong>
+    <ul>
+      <li>Drive: D3 and D4 alternately set high/low for square-wave AC; 1 kΩ series on each excitation rod for current limiting.</li>
+      <li>Sensing: inner rods to high-Z ADCs D2/A2 and D8/A8; optional small series protectors and RC filters near MCU.</li>
+      <li>Diagnostics: added <code>diag</code> to print paired ADC readings for A+ and B+ phases; spotted asymmetries and saturation episodes.</li>
+      <li>Preconditioning: added <code>pre</code> warm-up with slope and MAD checks; long soaks required to reduce drift.</li>
+      <li>New captures: <code>cap20</code>, <code>cap34</code>, <code>solve</code> recomputed mapping on AC; still observed slow drift and scale shifts across days.</li>
+    </ul>
+  </li>
+
+  <li><strong>Pin mapping and layout churn</strong>
+    <ul>
+      <li>Multiple revisions to accommodate motors, UART depth sensor, and salinity IO on the XIAO ESP32-S3; finalized grouping to keep motors contiguous and salinity together.</li>
+      <li>Mistakes addressed: accidental swap of excitation pins; clarified no ground reference on the four-wire cell; confirmed 3.3 V logic for drive.</li>
+    </ul>
+  </li>
+
+  <li><strong>Observed failure modes</strong>
+    <ul>
+      <li>Drift over tens of minutes even at rest; readings sometimes converged to incorrect plateaus.</li>
+      <li>“Same n range” in both 20 ppt and 34 ppt baths on some days indicating scale collapse.</li>
+      <li>Intermittent ADC asymmetry between phases; occasional saturation and negative EC from ill-conditioned maps.</li>
+      <li>Measurement sensitive to soak history, polarization, and likely microscopic gas film formation at stainless surfaces.</li>
+    </ul>
+  </li>
+
+  <li><strong>What improved</strong>
+    <ul>
+      <li>Thermistor readings stabilized with offset calibration.</li>
+      <li>AC drive plus longer preconditioning reduced the worst of the DC wander in several sessions.</li>
+      <li>Diagnostics made issues visible instead of guessing.</li>
+    </ul>
+  </li>
+
+  <li><strong>What did not yet meet requirements</strong>
+    <ul>
+      <li>Day-to-day repeatability still poor without re-preconditioning and remap.</li>
+      <li>Two-point maps remained sensitive to drift window and phase bias.</li>
+      <li>Four-wire AC without H-bridge has not yet produced robust separation of the two baths every time.</li>
+    </ul>
+  </li>
+
+  <li><strong>Current hardware state</strong>
+    <ul>
+      <li>Four rods in PVC cap, planned epoxy potting; outer rods driven through 1 kΩ from D3 and D4; inner rods sensed at D2/A2 and D8/A8; thermistor on D1/A1; depth sensor on UART D6/D7.</li>
+      <li>No big resistors on sense lines; optional small protectors and RC at MCU are acceptable.</li>
+    </ul>
+  </li>
+
+  <li><strong>Current firmware state</strong>
+    <ul>
+      <li>Serial commands: <code>pre</code>, <code>cap20</code>, <code>cap20!</code>, <code>cap34</code>, <code>cap34!</code>, <code>solve</code>, <code>run</code>, <code>stop</code>, <code>diag</code>.</li>
+      <li>Warm-up logic with slope and MAD; alternating phase sampling; temperature compensation to 25 °C.</li>
+      <li>Mapping applied after two captures; run mode streams EC_T, EC25, and ppt estimates.</li>
+      <li>Here is the <a href='./calibration.txt'>link to the calibration code</a>, which by this point is pretty ad-hoc and idiosyncratic. Not necessarily useful, but shared for completeness. </li>
+    </ul>
+  </li>
+
+  <li><strong>Key lessons</strong>
+    <ul>
+      <li>Stainless in static baths polarizes; timing and preconditioning dominate early readings.</li>
+      <li>Two-point linear maps require stable phase balance; otherwise invert or explode.</li>
+    </ul>
+  </li>
+
+  <li><strong>Next steps</strong>
+    <ul>
+      <li>Decide whether to add L9110 for symmetric low-impedance AC or persist with MCU-only drive and longer preconditioning.</li>
+      <li>Trial of brief flow or gentle agitation during capture to reduce boundary layer effects.</li>
+      <li>Surface prep experiment set for rods to compare finishes and passivation on stability.</li>
+      <li>Lock final pinout, then epoxy pot and repeat long-term soak tests without daily remapping.</li>
+    </ul>
+  </li>
+</ul>
+
     </article>
   </main>
   <footer>© <span id="y"></span> Sensors for Restoration</footer>
