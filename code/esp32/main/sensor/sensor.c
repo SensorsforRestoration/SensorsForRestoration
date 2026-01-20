@@ -107,11 +107,10 @@ static void send_one_record_as_packet(const log_record_t *rec, uint16_t idx, uin
     pkt.total       = total;
     pkt.timestamp   = rec->unix_s;
     pkt.sensor_id   = 1;
-
     pkt.payload.depth_mm = rec->depth_mm;
-    pkt.payload.r = r;
-    pkt.payload.g = g;
-    pkt.payload.b = b;
+    pkt.payload.r = rec->r;
+    pkt.payload.g = rec->g;
+    pkt.payload.b = rec->b;
 
     esp_err_t r = esp_now_send(receiver_mac, (uint8_t*)&pkt, sizeof(pkt));
     if (r != ESP_OK) {
@@ -163,9 +162,10 @@ void sensor(void)
     int16_t depth_mm = readDepthMm();
 
     // Decide whether to do daily color (simple: once every 1440 minutes)
-    bool do_color_today = (s_minutes % 1440u) == 0; // roughly once/day
+    // bool do_color_today = (s_minutes % 1440u) == 0; // roughly once/day
+    bool do_color_today = true;
     uint8_t r=0,g=0,b=0;
-
+    uint8_t flags = 0;
     if (time_is_valid()) flags |= 0x01;
 
     if (do_color_today) {

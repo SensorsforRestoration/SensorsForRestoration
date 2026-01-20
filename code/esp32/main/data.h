@@ -4,9 +4,11 @@
 // Sensor readings taken at predetermined intervals.
 typedef __attribute__((packed)) struct
 {
-    float depth[360];
-    float temperature[1];
-    float salinity[2];
+    int16_t  depth_mm;       // depth mm
+    int16_t salinity;
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
 } data;
 
 typedef __attribute__((packed)) struct
@@ -36,3 +38,14 @@ typedef __attribute__((packed)) struct
 {
     uint64_t timestamp;
 } time_sync_packet_t;
+
+
+//////////////////////////// Chat code i think this adds a part for the reciever board to send a signal to request the files
+
+// NEW: boat → sensor message to request upload
+typedef __attribute__((packed)) struct
+{
+    uint32_t magic;   // 0xB0A7CAFE
+} upload_request_t;
+
+#define UPLOAD_MAGIC 0xB0A7CAFEu

@@ -40,14 +40,14 @@ static void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *d, int 
 
     packet_t received;
     memcpy(&received, d, sizeof(received));
-    ESP_LOGI(TAG,
-             "From " MACSTR " | Packet Num: %lu | Time: %llu | Depth[2]=%.2f | Salinity[0]=%.2f | Temp[1]=%.2f",
-             MAC2STR(recv_info->src_addr),
-             received.packet_num,
-             received.timestamp,
-             received.payload.depth[2],
-             received.payload.salinity[0],
-             received.payload.temperature[1]);
+    // ESP_LOGI(TAG,
+    //          "From " MACSTR " | Packet Num: %lu | Time: %llu | Depth[2]=%.2f | Salinity[0]=%.2f | Temp[1]=%.2f",
+    //          MAC2STR(recv_info->src_addr),
+    //          received.packet_num,
+    //          received.timestamp,
+    //          received.payload.depth_mm[2],
+    //          received.payload.salinity[0],
+    //          received.payload.temperature[1]);
 
     bool received_all = false;
     ESP_ERROR_CHECK(store_packet(&received, &received_all));
@@ -67,9 +67,9 @@ static void recv_cb(const esp_now_recv_info_t *recv_info, const uint8_t *d, int 
 static void init_sntp(void)
 {
     ESP_LOGI(TAG, "Initialising SNTP...");
-    sntp_setoperatingmode(SNTP_OPMODE_POLL);
-    sntp_setservername(0, "pool.ntp.org");
-    sntp_init();
+    esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);
+    esp_sntp_setservername(0, "pool.ntp.org");
+    esp_sntp_init();
 
     time_t now = 0;
     struct tm timeinfo = {0};
@@ -91,6 +91,16 @@ static void init_sntp(void)
         ESP_LOGI(TAG, "Time synchronised");
     }
 }
+
+static void upload_request_task(void *pv)
+{
+    while (1) {
+        upload_request_t req = {.magic = UPLOAD_MAGIC};
+        esp_now_send(broadcastPeer.peer_addr, (uint8_t*)&req, sizeof(req));
+        vTaskDelay(pdMS_TO_TICKS(2000)); // every 2s while boat is nearby
+    }
+}
+
 
 static void send_cb(const esp_now_send_info_t *tx_info, esp_now_send_status_t status)
 {
@@ -139,6 +149,9 @@ void receiver(void)
     ESP_ERROR_CHECK(esp_now_register_recv_cb(recv_cb));
     ESP_ERROR_CHECK(esp_now_register_send_cb(send_cb));
     ESP_ERROR_CHECK(esp_now_add_peer(&broadcastPeer));
+
+    xTaskCreate(upload_request_task, "upload_request_task", 2048, NULL, 5, NULL);
+
 
     ESP_ERROR_CHECK(storage_init());
 
